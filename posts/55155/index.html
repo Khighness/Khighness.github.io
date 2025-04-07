@@ -1,0 +1,597 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kubernetes-API | Khighness</title><meta name="keywords" content="Kubernetes"><meta name="author" content="Khighness"><meta name="copyright" content="Khighness"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="学习Kubernetes的声明式API和Kubernetes编程范式，以Istio项目为例剖析声明式API的重要意义。深入探究API对象的奥秘，并编写Network自定义控制器。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes-API">
+<meta property="og:url" content="https://www.parak.top/posts/55155/index.html">
+<meta property="og:site_name" content="Khighness">
+<meta property="og:description" content="学习Kubernetes的声明式API和Kubernetes编程范式，以Istio项目为例剖析声明式API的重要意义。深入探究API对象的奥秘，并编写Network自定义控制器。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-78.jpg">
+<meta property="article:published_time" content="2022-06-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-10-26T14:38:02.840Z">
+<meta property="article:author" content="Khighness">
+<meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-78.jpg"><link rel="shortcut icon" href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/K.jpg"><link rel="canonical" href="https://www.parak.top/posts/55155/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//s4.cnzz.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?16576652";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script async="async" data-pjax="data-pjax" src="https://s4.cnzz.com/z_stat.php?id=1279324689&amp;web_id=1279324689"></script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Khighness","link":"链接: ","source":"来源: Khighness","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-10-26 22:38:02'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/background.css"><link rel="stylesheet" href="/css/iconfont/iconfont.css"><link rel="stylesheet" href="/css/mouse.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/css/main.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Khighness" type="application/atom+xml">
+</head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/Khighness.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">93</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">40</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-78.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Khighness</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Kubernetes-API</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-06-07T16:00:00.000Z" title="发表于 2022-06-08 00:00:00">2022-06-08</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-10-26T14:38:02.840Z" title="更新于 2022-10-26 22:38:02">2022-10-26</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Kubernetes/">Kubernetes</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>34分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Kubernetes-API"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="Use-API"><a href="#Use-API" class="headerlink" title="Use API"></a>Use API</h2><h3 id="Concept"><a href="#Concept" class="headerlink" title="Concept"></a>Concept</h3><p><code>kubectl create</code>、<code>kubectl replace</code>是命令式配置文件操作，<code>kubectl apply</code>是声明式API。</p>
+<h3 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h3><p>本地编写一个<code>nginx-deployment.yaml</code>文件：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-deployment</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">3</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">nginx:1.7.9</span></span><br><span class="line">        <span class="attr">ports:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span>                    </span><br></pre></td></tr></table></figure>
+
+<p>使用<code>kubectl apply</code>命令来创建这个Deployment：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl apply -f nginx-deployment.yaml</span></span><br><span class="line">deployment.apps/nginx-deployment created</span><br></pre></td></tr></table></figure>
+
+<p>然后修改一下<code>nginx-deployment.yaml</code>里定义的镜像：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">...</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">nginx:1.21.6</span></span><br><span class="line">        <span class="attr">ports:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<p>这时继续执行<code>kubectl apply</code>命令：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl apply -f nginx-deployment.yaml</span></span><br><span class="line">deployment.apps/nginx-deployment configured</span><br></pre></td></tr></table></figure>
+
+<p>这时，<code>Kubernetes</code>就会触发这个<code>Deployment</code>的滚动更新。</p>
+<h3 id="Problem"><a href="#Problem" class="headerlink" title="Problem"></a>Problem</h3><p>这样触发的更新与<code>kubectl create</code>再<code>kubectl replace</code>有什么区别呢？</p>
+<p><code>kubectl replace</code>的执行过程，是使用新的YAML文件中的<code>API</code>对象，替换原有的API对象；而<code>kubectl apply</code>，则是执行了一个对原有<code>API</code>对象的<code>PATCH</code>操作。</p>
+<p>更进一步地，这意味着<code>kube-apiserver</code>在响应命令式请求（比如<code>kubectl replace</code>）对时候，一次只能处理一个写请求，否则会有产生冲突的可能。而对于声明式请求（比如<code>kubectl apply</code>）的时候，一次能处理多个写操作，并且具体<code>Merge</code>的能力。</p>
+<h3 id="Meaning"><a href="#Meaning" class="headerlink" title="Meaning"></a>Meaning</h3><h4 id="Istio"><a href="#Istio" class="headerlink" title="Istio"></a>Istio</h4><p>下面以<code>Istio</code>项目为例，学习声明式<code>API</code>在实际使用时的重要意义。</p>
+<blockquote>
+<p>Istio官网：<a target="_blank" rel="noopener" href="https://istio.io/latest/zh/">https://istio.io/latest/zh/</a></p>
+<p>Server Mesh：<a target="_blank" rel="noopener" href="https://www.servicemesher.com/istio-handbook/concepts/basic.html">https://www.servicemesher.com/istio-handbook/concepts/basic.html</a></p>
+</blockquote>
+<p><code>Istio</code>是一个开源的<code>Service Mesh</code>实现产品，实际上就是一个基于<code>Kubernetes</code>项目的微服务治理框架，它的架构非常清晰，如下所示：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/55155/Istio-Architecture.webp" class="" title="Istio-Architecture"><br />
+
+<p>在上面这个架构图中，不难看到<code>Istio</code>项目架构的核心所在。<code>Istio</code>最根本的组件，是运行在每一个应用<code>Pod</code>里的<code>Envoy</code>容器。</p>
+<p>这个<code>Envoy</code>项目是Lyft公司推出的一个高性能C++网络代理，也是Lyft公司对Istio项目的唯一贡献。</p>
+<p>而<code>Istio</code>项目，则把这个代理服务以<code>sidecar</code>容器的方式，运行在了每一个被治理的应用Pod中。Pod里的所有容器都共享同一个<code>Network Namespace</code>。所以，<code>Envoy</code>容器就能够通过配置<code>Pod</code>里面的<code>iptables</code>规则，把整个<code>Pod</code>的进出流量接管下来。</p>
+<p>这时候，<code>Istio</code>的控制层（<code>Control Plane</code>）里的<code>Pilot</code>组件，就能够通过调用每个<code>Envoy</code>容器的<code>API</code>，对这个<code>Envoy</code>代理进行配置，从而实现微服务治理。</p>
+<p>看个🌰：假设这个<code>Istio</code>架构图左边的<code>Pod</code>是已经在运行的应用，而右边的<code>Pod</code>则是我们刚刚上线的应用的新版本。这时候，<code>Pilot</code>通过调节这两<code>Pod</code>里的<code>Enovy</code>容器的配置，从而将90%的流量分配给旧版本的应用，将10%的流量分配给新版本应用，并且，还可以在后续的过程中随时调整。这样，一个典型的灰度发布的场景就完成了。比如，Istio可以调节这个流量从90%-10%，改到80%-20%，再到50%-50%，最后到0%-100%，就完成了这个灰度发布的过程。</p>
+<p>更重要的是，在整个微服务治理的过程中，无论是对<code>Envoy</code>容器的部署，还是像上面这样对<code>Envoy</code>代理的配置，用户和应用都是完全“无感”的。</p>
+<p><code>Istio</code>项目使用的，是<code>Kubernetes</code>中一份非常重要的功能，叫做<code>Dynamic Admission Controll</code>。</p>
+<p>在<code>Kubernetes</code>项目中，当一个<code>Pod</code>或者任何一个<code>API</code>对象被提交给<code>APIServer</code>之后，总有一些“初始化”性质的工作需要在它们被<code>Kubernetes</code>项目正式处理之前进行。比如，自动为所有<code>Pod</code>加上某些标签（<code>Labels</code>）。</p>
+<p>而这个“初始化”操作的实现，借助的是一个叫作<code>Admission</code>的功能。它其实是<code>Kubernetes</code>项目里一组被称为<code>Admission Controller</code>的代码，可以选择性地被编译进<code>APIServe</code>r中，在<code>API</code>对象创建之后会被立刻调用到。</p>
+<p>但这就意味着，如果现在想要添加一些自己的规则到<code>Adminssion Controller</code>，就会比较困难。因为，这要求重新编译并重启<code>APIServer</code>。显然，这种使用方法对<code>Istio</code>来说，影响太大了。</p>
+<p>所以，<code>Kubernetes</code>项目为我们提供了一种“热插拔”式的<code>Admission</code>机制，它就是<code>Dynamic Admission Control</code>，也叫作<code>Initializer</code>。</p>
+<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><p>比如，现在有如下所示的一个应用<code>Pod</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">myapp-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">myapp</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">myapp-container</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">    <span class="attr">command:</span> [<span class="string">&#x27;sh&#x27;</span>, <span class="string">&#x27;-c&#x27;</span>, <span class="string">&#x27;echo Hello Kubernetes! &amp;&amp; sleep 3600&#x27;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这个<code>Pod</code>里面只有一个用户容器，叫作：<code>myapp-container</code>。</p>
+<p>接下来，<code>Istio</code>项目要做的，就是在这个<code>Pod</code>的YAML被提交给<code>Kubernetes</code>之后，在它对应的<code>API</code>对象里自动加上<code>Envoy</code>容器的配置，使这个对象变成如下所示的样子：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">myapp-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">myapp</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">myapp-container</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">    <span class="attr">command:</span> [<span class="string">&#x27;sh&#x27;</span>, <span class="string">&#x27;-c&#x27;</span>, <span class="string">&#x27;echo Hello Kubernetes! &amp;&amp; sleep 3600&#x27;</span>]</span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">envoy</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">lyft/envoy:845747b88f102c0fd262ab234308e9e22f693a1</span></span><br><span class="line">    <span class="attr">command:</span> [<span class="string">&quot;/usr/local/bin/envoy&quot;</span>]</span><br><span class="line">    <span class="string">...</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到，被<code>Istio</code>处理后的这个<code>Pod</code>里，除了用户自己定义的<code>myapp-container</code>容器之外，多出了一个叫作<code>envoy</code>的容器，它就是<code>IStio</code>要使用的<code>Envoy</code>代理。</p>
+<h4 id="Basic-Principle"><a href="#Basic-Principle" class="headerlink" title="Basic Principle"></a>Basic Principle</h4><p>那么，<code>Istio</code>又是如何在用户完全不知情的前提下完成这个操作的呢？</p>
+<p><code>Istio</code>要做的，就是编写一个用来为<code>Pod</code>“自动注入”<code>Envoy</code>容器的<code>Initializer</code>。</p>
+<p>首先，<code>Istio</code>会将这个<code>Envoy</code>容器本身的定义，以<code>ConfigMap</code>的方式保存在<code>Kubernetes</code>当中。这个<code>ConfigMap</code>（名叫：<code>envoy-initializer</code>）的定义如下所示：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">envoy-initializer</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">config:</span> <span class="string">|</span></span><br><span class="line"><span class="string">    containers:</span></span><br><span class="line"><span class="string">      - name: envoy</span></span><br><span class="line"><span class="string">        image: lyft/envoy:845747db88f102c0fd262ab234308e9e22f693a1</span></span><br><span class="line"><span class="string">        command: [&quot;/usr/local/bin/envoy&quot;]</span></span><br><span class="line"><span class="string">        args:</span></span><br><span class="line"><span class="string">          - &quot;--concurrency 4&quot;</span></span><br><span class="line"><span class="string">          - &quot;--config-path /etc/envoy/envoy.json&quot;</span></span><br><span class="line"><span class="string">          - &quot;--mode serve&quot;</span></span><br><span class="line"><span class="string">        ports:</span></span><br><span class="line"><span class="string">          - containerPort: 80</span></span><br><span class="line"><span class="string">            protocol: TCP</span></span><br><span class="line"><span class="string">        resources:</span></span><br><span class="line"><span class="string">          limits:</span></span><br><span class="line"><span class="string">            cpu: &quot;1000m&quot;</span></span><br><span class="line"><span class="string">            memory: &quot;512Mi&quot;</span></span><br><span class="line"><span class="string">          requests:</span></span><br><span class="line"><span class="string">            cpu: &quot;100m&quot;</span></span><br><span class="line"><span class="string">            memory: &quot;64Mi&quot;</span></span><br><span class="line"><span class="string">        volumeMounts:</span></span><br><span class="line"><span class="string">          - name: envoy-conf</span></span><br><span class="line"><span class="string">            mountPath: /etc/envoy</span></span><br><span class="line"><span class="string">    volumes:</span></span><br><span class="line"><span class="string">      - name: envoy-conf</span></span><br><span class="line"><span class="string">        configMap:</span></span><br><span class="line"><span class="string">          name: envoy</span></span><br></pre></td></tr></table></figure>
+
+<p>这个<code>ConfigMap</code>的<code>data</code>部分，正是一个<code>Pod</code>对象的一部分定义，其中，我们可以看到<code>Envoy</code>容器对应的<code>containers</code>字段，以及一个用来声明<code>Envoy</code>配置文件的<code>volumes</code>字段。</p>
+<p>不难想到，<code>Initializer</code>要做的工作，就是把这部分<code>Envoy</code>相关的字段，自动添加到用户提交的<code>Pod</code>的<code>API</code>对象里。可是，用户提交的<code>Pod</code>里本来就有containers字段和<code>volumes</code>字段，所以<code>Kubernetes</code>在处理这样的更新请求时，就必须使用类似于<code>git merge</code>这样的操作，才能将这两部分内容结合在一起。</p>
+<p>所以说，在<code>Initializer</code>更新用户的<code>Pod</code>对象的时候，必须使用<code>PATCH API</code>来完成。而这种<code>PATCH API</code>，正是声明式<code>API</code>最主要的能力。</p>
+<p>接下来，<code>Istio</code>将一个编写好的<code>Initializer</code>，作为一个<code>Pod</code>部署在<code>Kubernetes</code>中。这个<code>Pod</code>的定义非常简单，如下所示：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">envoy-initializer</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">envoy-initializer</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">envoy-initializer</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">envoy-initializer:0.0.1</span></span><br><span class="line">      <span class="attr">imagePullPolicy:</span> <span class="string">Always</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这个<code>envoy-initializer</code>使用的<code>envoy-initializer:0.0.1</code>镜像，就是一个事先编写好的“自定义控制器”（<code>Custom Controller</code>）。</p>
+<p>一个<code>Kubernetes Controller</code>，实际上就是一个死循环：它不断地获取实际状态，然后与期望状态，并以此为依据决定下一步的操作。</p>
+<p>而<code>Initializer</code>的控制器，不断获取到的实际状态，就是用户新创建的<code>Pod</code>。而它的“期望状态”，则是：这个<code>Pod</code>里被添加了<code>Envoy</code>容器的定义。</p>
+<p>用Go语言的伪代码描述这个控制逻辑，如下所示：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">  <span class="comment">// 获取新创建的Pod</span></span><br><span class="line">  pod := client.GetLatestPod()</span><br><span class="line">  <span class="comment">// Diff一下，检查是否已经初始化过</span></span><br><span class="line">  <span class="keyword">if</span> !isInitialized(pod) &#123;</span><br><span class="line">    <span class="comment">// 没有？那就来初始化一下</span></span><br><span class="line">    doSomthing(pod)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果这个<code>Pod</code>里面已经添加过<code>Envoy</code>容器，那么就“放过”这个<code>Pod</code>，进入下一个检查周期。</li>
+<li>而如果还没有添加过<code>Envoy</code>容器的话，它就要进行<code>Initilize</code>操作了，即：修改该<code>Pod</code>的<code>API</code>对象（<code>doSomething</code>函数）。</li>
+</ul>
+<p>这时候，<code>Istio</code>要往这个<code>Pod</code>里合并的字段，正是我们之前保存在<code>envoy-initializer</code>这个<code>ConfigMap</code>里的数据（即：它的<code>data</code>字段的值）。</p>
+<p>所以，在<code>Initializer</code>控制器的工作逻辑里，它首先会从<code>APIServer</code>中拿到这个<code>ConfigMap</code>：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">doSomthing</span><span class="params">(pod)</span></span> &#123;</span><br><span class="line">  cm := client.Get(Config, <span class="string">&quot;envoy-initializer&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后，把这个<code>ConfigMap</code>里存储的<code>containers</code>和<code>volumes</code>字段，直接添加进一个空的<code>Pod</code>对象里：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">doSomething</span><span class="params">(pod)</span></span> &#123;</span><br><span class="line">  cm := client.Get(Config, <span class="string">&quot;envoy-initializer&quot;</span>)</span><br><span class="line">  </span><br><span class="line">  newPod := Pod&#123;&#125;</span><br><span class="line">  newPod.Spec.Containers = cm.Containers</span><br><span class="line">  newPod.Spec.Volumes = cm.Volumes</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>现在，关键来了。<code>Kubernetes</code>的<code>API</code>库，提供了一个方法，可以直接使用新旧两个<code>Pod</code>对象，生成一个<code>TwoWayMergePatch</code>：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">doSomething</span><span class="params">(pod)</span></span> &#123;</span><br><span class="line">  cm := client.Get(Config, <span class="string">&quot;envoy-initializer&quot;</span>)</span><br><span class="line">  </span><br><span class="line">  newPod := Pod&#123;&#125;</span><br><span class="line">  newPod.Spec.Containers = cm.Containers</span><br><span class="line">  newPod.Spec.Volumes = cm.Volumes</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// 生成patch数据</span></span><br><span class="line">  patchBytes := strategicpatch.CreateTwoWayMergePatch(pod, newPod)</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// 发起PATCH请求，修改这个Pod对象</span></span><br><span class="line">  client.Patch(pod.Name, patchBytes)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有了这个<code>TwoWayMergePatch</code>之后，<code>Initializer</code>的代码就可以使用这个<code>patch</code>的数据，调用<code>Kubernetes</code>的<code>Client</code>，发起一个<code>PATCH</code>请求。</p>
+<p>这样，一个用户提交的<code>Pod</code>对象里，就会被自动加上<code>Envoy</code>容器相关的字段。</p>
+<h4 id="Other-Method"><a href="#Other-Method" class="headerlink" title="Other Method"></a>Other Method</h4><p>当然，<code>Kubernetes</code>还允许通过配置，来指定要对什么样的资源进行这个<code>Initialize</code>操作，比如下面这个🌰：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">admissionregistration.k8s.io/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">InitializerConfiguration</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">envoy-config</span></span><br><span class="line"><span class="attr">initializers:</span></span><br><span class="line">  <span class="string">//</span> <span class="string">这个名字必须至少包括两个</span> <span class="string">&quot;.&quot;</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">envoy.initializer.kubernetes.io</span></span><br><span class="line">    <span class="attr">rules:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">apiGroups:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="string">&quot;&quot;</span> <span class="string">//</span> <span class="string">前面说过，</span> <span class="string">&quot;&quot;</span><span class="string">就是core</span> <span class="string">API</span> <span class="string">Group的意思</span></span><br><span class="line">        <span class="attr">apiVersions:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="string">v1</span></span><br><span class="line">        <span class="attr">resources:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="string">pods</span></span><br></pre></td></tr></table></figure>
+
+<p>这个配置，就意味着<code>Kubernetes</code>要对所有的<code>Pod</code>进行这个<code>Initialize</code>操作，并且，我们指定了负责这个操作的<code>Initializer</code>，名叫：<code>envoy-initializer</code>。</p>
+<p>而一旦这个<code>InitializerConfiguration</code>被创建，<code>Kubernetes</code>就会把这个<code>Initializer</code>的名字，加在所有新创建的<code>Pod</code>的<code>Metadata</code>上，格式如下所示：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">initializers:</span></span><br><span class="line">    <span class="attr">pending:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">envoy.initializer.kubernetes.io</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">myapp-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">myapp</span></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到，每一个新创建的Pod，都会自动懈怠了<code>metadata.initializer.pending</code>的<code>Metadata</code>信息。</p>
+<p>这个<code>Metadata</code>，正是接下来<code>Initializer</code>的控制器判断这个<code>Pod</code>有没有执行过自己所负责的初始化操作的重要依据（也就是前面伪代码中<code>isInitialized()</code>方法的含义）。</p>
+<p>这也意味着，当你在<code>Initializer</code>里完成了要做的操作后，一定要记得将这个<code>metadata.initializers.pending</code>标志清除掉。这一点，在编写<code>Initializer</code>代码的时候一定要非常注意。</p>
+<p>此外，除了上面的配置方法，还可以在具体的<code>Pod</code>的<code>Annotation</code>里添加一个如下所示的字段，从而声明要使用某个<code>Initializer</code>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata</span><br><span class="line">  annotations:</span><br><span class="line">    &quot;initializer.kubernetes.io/envoy&quot;: &quot;true&quot;</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+
+<p>在这个<code>Pod</code>里，我们添加了一个<code>Annotation</code>，写明：<code>initializer.kubernetes.io/envoy=true</code>。这样，就会使用到我们前面所定义的<code>envoy-initializer</code>了。</p>
+<h4 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h4><p>Istio项目的核心，就是由无数个运行在应用<code>Pod</code>中的<code>Envoy</code>容器组成的服务代理网格。这也正是<code>Service Mesh</code>的含义。</p>
+<p>而这个机制得以实现的原理，正是借助了<code>Kubernetes</code>能够对<code>API</code>对象进行在线更新的能力，这也正是<code>Kubernetes</code>“声明式API”的独特之处。</p>
+<ul>
+<li>首先，所谓“声明式”，指的就是我只需要提交一个定义好的<code>API</code>对象来“声明”，我所期望的状态是什么样子。</li>
+<li>其次，”声明式API“允许有多个<code>API</code>写端，以<code>PATCH</code>的方式对<code>API</code>对象进行修改，而无需关心本地原始YAML文件的内容。</li>
+<li>最后，也是最重要的，有了上述两个能力，<code>Kubernetes</code>项目才可以基于对<code>API</code>对象的增、删、改、查，在完全无需外界干预的情况下，完成对实际状态和期望状态的调谐（<code>Reconcile</code>）过程。</li>
+</ul>
+<p>所以说，声明式<code>API</code>，才是<code>Kubernetes</code>项目编排能力“赖以生存”的核心所在。</p>
+<p>无论是对<code>sidecar</code>容器的巧妙设计，还是对<code>Initializer</code>的合理利用，<code>Istio</code>项目的设计与实现，其实都依托于<code>Kubernetes</code>的声明式<code>API</code>和它所提供的各种编排能力。可以说，<code>Istio</code>是<code>Kubernetes</code>项目使用上的一位“集大成者”。</p>
+<h2 id="API’s-secret"><a href="#API’s-secret" class="headerlink" title="API’s secret"></a>API’s secret</h2><h3 id="Design"><a href="#Design" class="headerlink" title="Design"></a>Design</h3><p>一直好奇：当我把一个YAML文件提交给<code>Kubernetes</code>之后，它究竟是如何创建出一个<code>API</code>对象的呢？</p>
+<p>在<code>Kubernetes</code>中，一个<code>API</code>对象在Etcd里的完整资源路径，是由<code>Group</code>（API组）、<code>Version</code>（API版本）和<code>Resource</code>（API资源类型）三个部分组成的。</p>
+<p>通过这样的结构，整个<code>Kubernetes</code>里的所有<code>API</code>对象，实际上就可以用如下的树形结构表示出来：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/55155/etcd-API-Structure.webp" class="" title="etcd-API-Structure"><br />
+
+<p>在这张图里，可以清除地看到<code>Kubernetes</code>里<code>API</code>对象的组织方式，其实是层层递进的。</p>
+<p>比如，现在要声明创建一个<code>CronJob</code>对象，那么YAML文件的开始部分会这么写：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v2alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">CronJob</span></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
+
+<p>在这个YAML文件中，“CronJob”就是这个API对象的资源类型（<code>Resource</code>），“batch”就是它的组（<code>Group</code>），“v2alpha1”就是它的版本（<code>Version</code>）。</p>
+<p>当我们提交了这个YAML文件之后，<code>Kubernetes</code>就会把这个YAML文件里描述的内容，转换成<code>Kubernetes</code>里的一个<code>CronJob</code>对象。</p>
+<h3 id="Problem-1"><a href="#Problem-1" class="headerlink" title="Problem"></a>Problem</h3><p>那么，<code>Kubernetes</code>是如何对<code>Resource</code>、<code>Group</code>和<code>Version</code>进行解析，从而在<code>Kubernetes</code>项目里找到<code>CronJob</code>对象的定义呢？</p>
+<p>首先，Kubernetes会匹配API对象的组。</p>
+<p>需要明确的是，对于<code>Kubernetes</code>里的核心<code>API</code>对象，比如：<code>Pod</code>、<code>Node</code>等，是不需要<code>Group</code>的（即它们的<code>Group</code>是“”）。所以，对于这些<code>API</code>对象来说，<code>Kubernetes</code>会直接在<code>/api</code>这个层级进行下一步的匹配过程。</p>
+<p>而对于<code>CronJob</code>等非核心API对象来说，<code>Kubernetes</code>就必须在<code>/apis</code>这个层级里查找它对应的<code>Group</code>，进而根据“batch”这个<code>Group</code>的名字，找到<code>/apis/batch</code>。</p>
+<p>不难发现，这些<code>API Group</code>的分类是以对象功能为依据的，比如<code>Job</code>和<code>Cronjob</code>就都属于“batch”（离线业务）这个<code>Group</code>。</p>
+<p>然后，<code>Kubernetes</code>会进一步匹配到API对象的版本号。</p>
+<p>对于<code>CronJob</code>这个<code>API</code>对象来说，<code>Kubernetes</code>在<code>batch</code>这个<code>Group</code>下，匹配到的版本号就是<code>v2alpha1</code>。</p>
+<p>在<code>Kubernetes</code>中，同一种<code>API</code>对象可以有多个版本，这正是<code>Kubernetes</code>进行<code>API</code>版本化管理的重要手段。这样，比如在<code>CronJob</code>的开发过程中，对于会影响到用户的变更就可以通过升级新版本号来处理，从而保证了向后兼容。</p>
+<p>最后，<code>Kubernetes</code>会匹配<code>API</code>对象的资源类型。</p>
+<p>在前面匹配到正确的版本之后，Kubernetes就知道要创建一个<code>/apis/batch/v2alpha1</code>下的<code>CronJob</code>对象。</p>
+<p>这时候，<code>APIServer</code>就可以继续创建这个<code>CronJob</code>对象了。</p>
+<p>流程图如下：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/55155/Create-CronJob.webp" class="" title="Create-CronJob"><br />
+
+<p>首先，当我们发起了创建<code>CronJob</code>的<code>POST</code>请求之后，我们编写的YAML的信息就被提交给了<code>APIServer</code>。</p>
+<p>而<code>APIServer</code>的第一个功能，就是过滤这个请求，并完成一些前置性的工作，比如授权、超时处理、审计等。</p>
+<p>然后，请求会进入<code>MUX</code>和<code>Routes</code>流程。<code>MUX</code>和<code>Routes</code>是<code>APIServer</code>完成<code>URL</code>和<code>Handler</code>绑定的场所。而<code>APIServer</code>的<code>Handler</code>要做的事情，就是按照上述匹配流程，找到对应的<code>CronJob</code>类型定义。</p>
+<p>接着，<code>APIServer</code>最重要的职责就来了：根据这个<code>CronJob</code>类型定义，使用用户的YAML文件里的字段，创建一个<code>CronJob</code>对象。</p>
+<p>而在这个过程中，<code>APIServer</code>会进行一个<code>Convert</code>工作，即：把用户提交的YAML文件，转换成一个叫作<code>Super Version</code>的对象，它正是该API资源类型所有版本的字段全集。这样用户提交的不同版本的YAML文件，就都可以用这个<code>Super Version</code>对象来进行处理了。</p>
+<p>接下来，<code>APIServer</code>会先后进行<code>Admission()</code>和<code>Validation()</code>操作。<code>Admission Controller</code>和<code>Initializer</code>，就都属于<code>Admission</code>的内容。</p>
+<p>而<code>Validation</code>，则负责验证验证这个对象里的各个字段是否合法。这个被验证过的API对象，都保存在了<code>APIServer</code>里一个叫作<code>Registry</code>的数据结构中。也就是说，只要一个<code>API</code>对象的定义能在<code>Registry</code>里查到，它就是一个有效的<code>Kubernetes API</code>对象。</p>
+<p>最后，<code>APIServer</code>会把验证过的API对象转换成用户最初提交的版本，进行序列化操作，并调用<code>Etcd</code>的<code>API</code>把它保存起来。</p>
+<p>由此可见，声明式<code>API</code>对于<code>Kubernetes</code>来说非常重要。所以，<code>APIServer</code>这样一个在其他项目里“平淡无奇”的组件，却成了<code>Kubernetes</code>项目的重中之重。它不仅是<code>Google Borg</code>设计思想的集中体现，也是<code>Kubernetes</code>项目里唯一一个被Google公司和RedHat公司双重控制、其他势力根本无法参与其中的组件。</p>
+<p>此外，由于同时要兼顾性能、API完备性、版本化、向后兼容等很多工程化指标，所以<code>Kubernetes</code>团队在<code>APIServer</code>项目里大量使用了Go语言的代码生成功能，来自动化注入<code>Convert</code>、<code>DeepCopy</code>等于API资源相关的操作。这部分自动生成的代码，曾一度占到<code>Kubernetes</code>项目总代码的20%~20%。</p>
+<p>这也是为何，在过去很长一段时间里，在这样一个极其“复杂”的<code>APIServer</code>中，添加一个<code>Kubernetes</code>风格的<code>API</code>资源类型，是一个非常困难的工作。</p>
+<h3 id="CRD"><a href="#CRD" class="headerlink" title="CRD"></a>CRD</h3><p>不过，在<code>Kubernetes v1.7</code>之后，这个工作就变得轻松得多了。这，得益于一个全新的API插件机制：<code>CRD</code>。</p>
+<p><code>CRD</code>的全称是<code>Custom Resource Definition</code>。顾名思义，它指的就是，允许用户在<code>Kubernetes</code>中添加一个跟<code>Pod</code>、<code>Node</code>类似的、新的<code>API</code>资源类型，即：自定义API资源。</p>
+<p>举个🌰：现在要为<code>Kubernetes</code>添加一个名叫<code>Network</code>的<code>API</code>资源类型。</p>
+<p>它的作用是，一旦用户创建一个<code>Network</code>对象，那么<code>Kubernetes</code>就应该使用这个对象定义的网络参数，调用真实的网络插件，比如<code>Neturon</code>项目，为用户创建一个真正的“网络”。这样，将来用户创建的<code>Pod</code>，就可以声明使用这个“网络”了。</p>
+<h2 id="Custom-Controller"><a href="#Custom-Controller" class="headerlink" title="Custom Controller"></a>Custom Controller</h2><p>🚀code：<a target="_blank" rel="noopener" href="https://github.com/Khighness/highness-network-controller">https://github.com/Khighness/highness-network-controller</a></p>
+<p>为<code>Network</code>这个自定义<code>API</code>对象编写一个自定义控制器（<code>Custom Controller</code>）。</p>
+<p>“声明式API”并不像”命令式API“那样有着明显的执行逻辑。这就使得基于声明式<code>API</code>的业务功能实现，往往需要控制器模式来“监视”<code>API</code>对象的变化（比如，创建或者删除<code>Network</code>），然后以此来决定实际要执行的具体工作。</p>
+<p>总的来说，编写自定义控制器代码的过程包括：编写<code>main</code>函数、编写自定义控制器的定义，以及编写控制器里的业务逻辑三个部分。</p>
+<h3 id="Main-Function"><a href="#Main-Function" class="headerlink" title="Main Function"></a>Main Function</h3><p>main函数的主要工作就是，定义并出示好一个自定义控制器（<code>Custom Controller</code>），然后启动它。这部分的主要内容如下所示：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	flag.Parse()</span><br><span class="line">	<span class="comment">// handler the first shutdown signal gracefully</span></span><br><span class="line">	stopCh := signals.SetupSignalHandler()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 1.1 build config via the url of APIServer and the path of kubeConfig</span></span><br><span class="line">	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeConfig)</span><br><span class="line">	<span class="comment">// 1.2 create the client of kubernetes</span></span><br><span class="line">	kubeClient, err := kubernetes.NewForConfig(cfg)</span><br><span class="line">	<span class="comment">// 1.3 create the client of network</span></span><br><span class="line">	networkClient, err := clientset.NewForConfig(cfg)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 2. create a factory for network, and transfer if to controller</span></span><br><span class="line">	networkInformerFactory := informers.NewSharedInformerFactory(networkClient, <span class="number">30</span>*time.Second)</span><br><span class="line">	controller := NewController(kubeClient, networkClient, networkInformerFactory.Samplecrd().V1().Networks())</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 3. start the factory and the controller</span></span><br><span class="line">	<span class="keyword">go</span> networkInformerFactory.Start(stopCh)</span><br><span class="line">	<span class="keyword">if</span> err = controller.Run(<span class="number">2</span>, stopCh); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		glog.Fatalf(<span class="string">&quot;Error running controller: %s&quot;</span>, err.Error())</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个main函数主要通过三步完成了初始化并启动了一个自定义控制器的工作。</p>
+<h3 id="Working-Principle"><a href="#Working-Principle" class="headerlink" title="Working Principle"></a>Working Principle</h3><p>一个自定义控制器的工作原理，可以用下面这样一幅流程图来表示：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/55155/Kubernetes-All.webp" class="" title="Kubernetes-All"><br />
+
+<p>从这幅示意图的最左边看起。</p>
+<hr>
+<p>这个控制器要做的第一件事，是从<code>Kubernetes</code>的<code>APIServer</code>里获取它所关心的对象，也就是定义的<code>Network</code>对象。</p>
+<p>这个操作，依靠的是一个叫做<code>Informer</code>（可以翻译为：通知器）的代码库完成的。<code>Informer</code>与<code>API</code>对象是一一对应的，所以传递给自定义控制器的，正是一个<code>Network</code>对象的<code>Informer</code>（<code>Network Informer</code>）。</p>
+<p>在创建这个<code>Informer</code>工厂的时候，需要给它传递一个<code>networkClient</code>。</p>
+<p>事实上，<code>Network Informer</code>正是使用这个<code>networkClient</code>，跟<code>APIServer</code>建立了连接。不过，真正负责维护这个连接的，则是<code>Informer</code>所使用的<code>Reflector</code>包。</p>
+<p>更具体地说，<code>Reflector</code>使用的是一种叫作<code>ListAndWatch</code>的方法，来获取并监听这些<code>Network</code>对象实例的变化。</p>
+<p>在<code>ListAndWatch</code>机制下，一旦<code>APIServer</code>端有新的<code>Network</code>实例被创建、删除或者更新，<code>Reflector</code>都会收到事件通知。这时，该事件及它对应的API对象这个组合，就被称为增量（<code>Delta</code>），它会被放进一<code>个Delta FIFO Queue</code>（增量先进先出队列）中。</p>
+<p>而另一方面，<code>Informer</code>会不断地从这个<code>Delta FIFO Queue</code>里读去（<code>Pop</code>）增量。每拿到一个增量，<code>Informer</code>就会判断这个增量里的事件类型，然后创建或者更新本地对象的缓存。这个缓存，在<code>Kubernetes</code>里一般被叫作<code>Store</code>。</p>
+<p>比如，如果事件类型是<code>Added</code>（添加对象），那么<code>Informer</code>就会通过一个叫作<code>Indexer</code>的库把这个增量里的<code>API</code>对象保存到本地缓存中，并为它创建索引。相反，如果增量的事件类型是<code>Deleted</code>（删除对象），那么<code>Informer</code>就会从本地缓存中删除这个对象。</p>
+<p>这个<strong>同步缓存</strong>的工作，是<code>Informer</code>的第一个职责，也是它最重要的职责。</p>
+<hr>
+<p>而<code>Informer</code>的第二个职责，则是根据这些事件的类型，触发事先注册好的<code>ResourceEventHandler</code>。这些<code>Handler</code>，需要在创建控制器的时候注册给它对应的<code>Informer</code>。</p>
+<p>接下来，编写这个这个控制器的定义，它的主要内容如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewController</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">	kubeClientSet kubernetes.Interface,</span></span></span><br><span class="line"><span class="params"><span class="function">	networkClientSet clientset.Interface,</span></span></span><br><span class="line"><span class="params"><span class="function">	networkInformer informers.NetworkInformer)</span></span> *Controller &#123;</span><br><span class="line"></span><br><span class="line">	runtime.Must(networkschema.AddToScheme(scheme.Scheme))</span><br><span class="line">	glog.V(<span class="number">4</span>).Info(<span class="string">&quot;Creating event broadcaster&quot;</span>)</span><br><span class="line">	eventBroadcaster := record.NewBroadcaster()</span><br><span class="line">	eventBroadcaster.StartLogging(glog.Infof)</span><br><span class="line">	eventBroadcaster.StartRecordingToSink(&amp;typedcorev1.EventSinkImpl&#123;Interface: kubeClientSet.CoreV1().Events(<span class="string">&quot;&quot;</span>)&#125;)</span><br><span class="line">	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource&#123;Component: controllerAgentName&#125;)</span><br><span class="line"></span><br><span class="line">	controller := &amp;Controller&#123;</span><br><span class="line">		kubeClientSet:    kubeClientSet,</span><br><span class="line">		networkClientSet: networkClientSet,</span><br><span class="line">		networkListener:  networkInformer.Lister(),</span><br><span class="line">		networkSynced:    networkInformer.Informer().HasSynced,</span><br><span class="line">		workQueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), <span class="string">&quot;Networks&quot;</span>),</span><br><span class="line">		recorder:         recorder,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	glog.Info(<span class="string">&quot;Setting up event handlers&quot;</span>)</span><br><span class="line">	networkInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs&#123;</span><br><span class="line">		AddFunc: controller.enqueueNetwork,</span><br><span class="line">		UpdateFunc: <span class="function"><span class="keyword">func</span><span class="params">(oldObj, newObj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">			oldNetwork := oldObj.(*samplecrdv1.Network)</span><br><span class="line">			newNetwork := newObj.(*samplecrdv1.Network)</span><br><span class="line">			<span class="keyword">if</span> oldNetwork.ResourceVersion == newNetwork.ResourceVersion &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			controller.enqueueNetwork(newObj)</span><br><span class="line">		&#125;,</span><br><span class="line">		DeleteFunc: controller.enqueueNetworkForDelete,</span><br><span class="line">	&#125;)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> controller</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在main函数中创建了两个<code>client</code>（<code>kubeClient</code>和<code>networkClient</code>），然后在这段代码里，使用这两个<code>client</code>和前端创建的<code>Informer</code>，初始化了自定义控制器。</p>
+<p>值得注意的是，在这个自定义控制器里，设置了一个工作队列（<code>work queue</code>），它正是处于示意图中间位置的<code>WorkQueue</code>。这个工作队列的作用是，负责同步<code>Informer</code>和控制循环之间的数据。</p>
+<blockquote>
+<p>实际上，<code>Kubernetes</code>提供了很多个工作队列的实现，可以根据需要选择合适的库直接使用。</p>
+</blockquote>
+<p>然后，为<code>networkInformer</code>注册了三个<code>Handler</code>（<code>AddFunc</code>、<code>UpdateFunc</code>和<code>DeleteFunc</code>），分别对应<code>API</code>对象的“添加”“更新”和”删除“事件。而具体的处理操作，都是将该事件对应的API对象加入到工作队列中。</p>
+<p>需要注意的是，实际入队的并不是<code>API</code>对象本身，而是它们本身的<code>Key</code>，即：该API对象的namespace/name。</p>
+<p>而后面即将编写的控制循环，则会不断地从这个工作队列里拿到这些<code>Key</code>，然后开始执行真正的控制逻辑。</p>
+<p>综上所述，所谓<code>Informer</code>，其实就是一个带有本地缓存和索引机制的、可以注册<code>EventHandler</code>的<code>client</code>。它是自定义控制器跟<code>APIServer</code>进行数据同步的重要组件。</p>
+<p>更具体地说，<code>Informer</code>通过一种叫作<code>ListAndWatch</code>的方法，把<code>APIServer</code>的<code>API</code>对象缓存在了本地，并负责更新和维护这个缓存。</p>
+<p>其中，<code>ListAndWatch</code>方法的含义是：首先，通过<code>APIServer</code>的<code>LIST API</code>“获取”所有最新版本的API对象；然后，再通过<code>WATCH API</code>来“监听”所有这些API对象的变化。</p>
+<p>而通过监听到的事件变化，<code>Informer</code>就可以实时更新本地缓存，并且调用这些事件对应的<code>EventHandler</code>了。</p>
+<p>此外，在这个过程中，每经过<code>resyncPeroid</code>指定的时间，<code>Informer</code>维护的本地缓存，都会使用最近一次<code>LIST</code>返回的结果强制更新一次，从而保证缓存的有效性。在<code>Kubernetes</code>中，这个缓存强制更新的操作就叫做：<code>resync</code>。</p>
+<p>需要注意的是，这个定时<code>resync</code>操作，也会触发<code>Informer</code>注册的“更新”事件。但此时，这个“更新”事件对应的<code>Network</code>对象实际上并没有发生变化，即：新、旧两个<code>Network</code>对象的<code>ResourceVersion</code>是一样的。在这种情况下，<code>Informer</code>就不需要对这个更新事件再做进一步的处理了。</p>
+<p>这也是为什么上面的<code>UpdateFunc</code>方法里，先判断了一下新、旧两个<code>Network</code>对象的版本（<code>ResourceVersion</code>）是否发生了变化，然后才开始进行的入队操作。</p>
+<p>以上，就是<code>Kubernetes</code>中的<code>Informer</code>库的工作原理。</p>
+<hr>
+<p>接下来，我们即来到了示意图中最后面的控制循环（<code>Control Loop</code>）部分，也正是<code>main</code>函数最后调用<code>controller.Run()</code>启动的“控制循环”。 它的主要内容如下所示：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Controller)</span></span> Run(threadiness <span class="type">int</span>, stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;) <span class="type">error</span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> runtime.HandleCrash()</span><br><span class="line">	<span class="keyword">defer</span> c.workQueue.ShutDown()</span><br><span class="line"></span><br><span class="line">	glog.Info(<span class="string">&quot;Starting network control loop&quot;</span>)</span><br><span class="line"></span><br><span class="line">	glog.Info(<span class="string">&quot;Waiting for informers caches to sync&quot;</span>)</span><br><span class="line">	<span class="keyword">if</span> ok := cache.WaitForCacheSync(stopCh, c.networkSynced); !ok &#123;</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">&quot;failed to wait for caches to sync&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	glog.Info(<span class="string">&quot;Starting workers&quot;</span>)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; threadiness; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> wait.Until(c.runWorker, time.Second, stopCh)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	glog.Info(<span class="string">&quot;Started workers&quot;</span>)</span><br><span class="line">	&lt;-stopCh</span><br><span class="line">	glog.Info(<span class="string">&quot;Shutting down workers&quot;</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，启动控制循环的逻辑非常简单：</p>
+<ul>
+<li>首先，等待<code>Infomer</code>完成一次本地缓存的数据同步操作；</li>
+<li>然后，直接通过<code>goroutine</code>启动一个（或者并发启动多个）“无限循环”的任务。</li>
+</ul>
+<p>而这个“无限循环”任务的每一个循环周期，执行的正是我们真正的业务逻辑。</p>
+<p>接下来，就编写这个自定义控制器的业务逻辑，它的主要内容如下所示：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Controller)</span></span> runWorker() &#123;</span><br><span class="line">	<span class="keyword">for</span> c.processNextWorkItem() &#123;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Controller)</span></span> processNextWorkItem() <span class="type">bool</span> &#123;</span><br><span class="line">	obj, shutdown := c.workQueue.Get()</span><br><span class="line">	<span class="keyword">if</span> shutdown &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	err := <span class="function"><span class="keyword">func</span><span class="params">(obj <span class="keyword">interface</span>&#123;&#125;)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> c.workQueue.Done(obj)</span><br><span class="line">		<span class="keyword">var</span> (</span><br><span class="line">			key <span class="type">string</span></span><br><span class="line">			ok  <span class="type">bool</span></span><br><span class="line">		)</span><br><span class="line">		<span class="keyword">if</span> key, ok = obj.(<span class="type">string</span>); !ok &#123;</span><br><span class="line">			c.workQueue.Forget(obj)</span><br><span class="line">			runtime.HandleError(fmt.Errorf(<span class="string">&quot;expected string in workQueue but get %#v&quot;</span>, obj))</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> err := c.syncHandler(key); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> fmt.Errorf(<span class="string">&quot;error syncing &#x27;%s&#x27;: %s&quot;</span>, key, err.Error())</span><br><span class="line">		&#125;</span><br><span class="line">		c.workQueue.Forget(obj)</span><br><span class="line">		glog.Infof(<span class="string">&quot;Successfully sync &#x27;%s&#x27;&quot;</span>, key)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;(obj)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		runtime.HandleError(err)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Controller)</span></span> syncHandler(key <span class="type">string</span>) <span class="type">error</span> &#123;</span><br><span class="line">	namespace, name, err := cache.SplitMetaNamespaceKey(key)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		runtime.HandleError(err)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	network, err := c.networkListener.Networks(namespace).Get(name)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> errors.IsNotFound(err) &#123;</span><br><span class="line">			glog.Warningf(<span class="string">&quot;Network: %s/%s does not exist in local cache, will delete it from Neutron ...&quot;</span>,</span><br><span class="line">				namespace, name)</span><br><span class="line">			glog.Infof(<span class="string">&quot;[Neutron] Deleting network: %s/%s ...&quot;</span>, namespace, name)</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">		runtime.HandleError(fmt.Errorf(<span class="string">&quot;failed to list nerwork by: %s/%s&quot;</span>, namespace, name))</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	glog.Infof(<span class="string">&quot;[Neutron] Try to process network: %#v ...&quot;</span>, network)</span><br><span class="line">	c.recorder.Event(network, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，在这个执行周期里（<code>processNextWorkItem</code>），首先从工作队列里出队（<code>workqueue.Get</code>）了一个成员，也就是一个<code>Key</code>（<code>Network</code>对象的：namespace/name）。</p>
+<p>然后，在<code>syncHandler</code>方法中，使用这个<code>Key</code>，尝试从<code>Informer</code>维护的缓存中拿到了它所对应的<code>Network</code>对象。</p>
+<p>可以看到，在这里，使用了<code>networkListener</code>来尝试获取这个<code>Key</code>对应的<code>Network</code>对象。这个操作，其实就是在访问本地缓存的索引。实际上，在<code>Kubernetes</code>的源码中，可以经常看到控制器从各种<code>Listener</code>里获取对象，比如：<code>podListener</code>、<code>nodeListener</code>等等，它们使用的都是<code>Informer</code>和缓存机制。</p>
+<p>而如果控制循环从缓存中拿不到这个（即：<code>networkListener</code>返回了<code>isNotFound</code>错误），那就意味着这个<code>Network</code>对象的<code>Key</code>是通过前面的“删除”事件添加进工作队列的。所以，尽管队列里有这个<code>Key</code>，但是对应的<code>Network</code>对象已经被删除了。</p>
+<p>这时候就需要调用<code>Neutron</code>的<code>API</code>，把这个<code>Key</code>的<code>Neutron</code>网络从真实的集群里删除掉。</p>
+<p>而如果能够获取到对应的<code>Network</code>对象，就可与执行控制器模式里的对比“期望状态”和“实际状态”的逻辑了。</p>
+<p>其中，自定义控制器“千辛万苦”拿到的这个<code>Network</code>对象，正是<code>APIServer</code>里保存的”期望状态”，即：用户通过YAML文件提交到<code>APIServer</code>里的信息。当然，在例子里，它已经被<code>Informer</code>缓存在了本地。</p>
+<p>那么，“实际状态”又从哪里来呢？</p>
+<p>当然是来自于实际的集群了，所以，控制循环需要通过<code>Neutron API</code>来查询实际的网络情况。</p>
+<p>比如，可以通过<code>Neutron</code>来查询这个<code>Network</code>对象对应的真实网络是否存在。</p>
+<ul>
+<li>如果不存在，这就是一个典型的“期望状态”与“实际状态”不一致的情形。这时，就需要使用这个<code>Network</code>对象里的信息（比如：<code>CIDR</code>和<code>Gateway</code>），调用<code>Neutron API</code>来创建真实的网络。</li>
+<li>如果存在，那么，就要读取这个真实网络的信息，判断它是否跟<code>Network</code>对象里的信息一致，从而决定是否要通过<code>Neutron</code>来更新这个已经存在的真实网络。</li>
+</ul>
+<p>这样，就可以通过对比“期望状态”和“实际状态”的差异，完成了一次调谐（<code>Reconcile</code>）的过程。</p>
+<h3 id="Build-and-Run"><a href="#Build-and-Run" class="headerlink" title="Build and Run"></a>Build and Run</h3><p>可以通过如下流程将项目编译成二进制文件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git <span class="built_in">clone</span> https://github.com/Khighness/highness-network-controller</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> highness-network-controller</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">go mod tidy</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">go build -o highness-network-controller .</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>尝试运行自定义控制器，如下所示：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./highness-network-controller -kubeconfig=<span class="variable">$HOME</span>/.kube/config -alsologtostderr=<span class="literal">true</span></span></span><br><span class="line">I0617 09:21:41.741895    5389 controller.go:77] Setting up event handlers</span><br><span class="line">I0617 09:21:41.746107    5389 controller.go:103] Starting network control loop</span><br><span class="line">I0617 09:21:41.746139    5389 controller.go:106] Waiting for informers caches to sync</span><br><span class="line">E0617 09:21:41.772859    5389 reflector.go:134] pkg/mod/k8s.io/client-go@v0.0.0-20180902073250-f06dbfd73543/tools/cache/reflector.go:95: Failed to list *v1.Network: the server could not find the requested resource (get networks.samplecrd.k8s.io)</span><br><span class="line">E0617 09:21:42.775466    5389 reflector.go:134] pkg/mod/k8s.io/client-go@v0.0.0-20180902073250-f06dbfd73543/tools/cache/reflector.go:95: Failed to list *v1.Network: the server could not find the requested resource (get networks.samplecrd.k8s.io)</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，一开始启动后会报错。</p>
+<p>这是因为，此时<code>Network</code>对象的CRD还没有被创建出来，所以<code>Informer</code>去<code>APIServer</code>里“获取”（<code>List</code>）<code>Network</code>对象时，并不能找到<code>Network</code>这个API资源类型的定义。</p>
+<p>接下来，创建<code>Network</code>对象的CRD：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl apply -f crd/network.yaml</span></span><br><span class="line">customresourcedefinition.apiextensions.k8s.io/networks.samplecrd.k8s.io created</span><br></pre></td></tr></table></figure>
+
+<p>这时候，可以看到控制器的日志恢复了正常，控制循环启动成功：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">I0617 09:22:45.946500    5389 controller.go:111] Starting workers</span><br><span class="line">I0617 09:22:45.946518    5389 controller.go:117] Started workers</span><br></pre></td></tr></table></figure>
+
+
+
+<p>接下来，创建一个<code>Network</code>对象：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> example/example-network.yaml</span></span><br><span class="line">apiVersion: samplecrd.k8s.io/v1</span><br><span class="line">kind: Network</span><br><span class="line">metadata:</span><br><span class="line">  name: example-network</span><br><span class="line">spec:</span><br><span class="line">  cidr: &quot;192.168.0.0/16&quot;</span><br><span class="line">  gateway: &quot;192.168.0.1&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl apply -f example/example-network.yaml</span></span><br><span class="line">network.samplecrd.k8s.io/example-network created</span><br></pre></td></tr></table></figure>
+
+<p>这时候，查看一下控制器的日志：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">I0617 09:23:31.766052    5389 controller.go:189] [Neutron] Try to process network: &amp;v1.Network&#123;TypeMeta:v1.TypeMeta&#123;Kind:&quot;&quot;, APIVersion:&quot;&quot;&#125;, ObjectMeta:v1.ObjectMeta&#123;Name:&quot;example-network&quot;, GenerateName:&quot;&quot;, Namespace:&quot;default&quot;, SelfLink:&quot;/apis/samplecrd.k8s.io/v1/namespaces/default/networks/example-network&quot;, UID:&quot;597cfbff-00f0-447c-a8d5-6cec45c26222&quot;, ResourceVersion:&quot;23354&quot;, Generation:1, CreationTimestamp:time.Date(2022, time.June, 17, 9, 23, 31, 0, time.Local), DeletionTimestamp:&lt;nil&gt;, DeletionGracePeriodSeconds:(*int64)(nil), Labels:map[string]string(nil), Annotations:map[string]string&#123;&quot;kubectl.kubernetes.io/last-applied-configuration&quot;:&quot;&#123;\&quot;apiVersion\&quot;:\&quot;samplecrd.k8s.io/v1\&quot;,\&quot;kind\&quot;:\&quot;Network\&quot;,\&quot;metadata\&quot;:&#123;\&quot;annotations\&quot;:&#123;&#125;,\&quot;name\&quot;:\&quot;example-network\&quot;,\&quot;namespace\&quot;:\&quot;default\&quot;&#125;,\&quot;spec\&quot;:&#123;\&quot;cidr\&quot;:\&quot;192.168.0.0/16\&quot;,\&quot;gateway\&quot;:\&quot;192.168.0.1\&quot;&#125;&#125;\n&quot;&#125;, OwnerReferences:[]v1.OwnerReference(nil), Initializers:(*v1.Initializers)(nil), Finalizers:[]string(nil), ClusterName:&quot;&quot;&#125;, Spec:v1.NetworkSpec&#123;Cidr:&quot;192.168.0.0/16&quot;, Gateway:&quot;192.168.0.1&quot;&#125;&#125; ...</span><br><span class="line">I0617 09:23:31.766972    5389 controller.go:155] Successfully sync &#x27;default/example-network&#x27;</span><br><span class="line">I0617 09:23:31.767115    5389 event.go:221] Event(v1.ObjectReference&#123;Kind:&quot;Network&quot;, Namespace:&quot;default&quot;, Name:&quot;example-network&quot;, UID:&quot;597cfbff-00f0-447c-a8d5-6cec45c26222&quot;, APIVersion:&quot;samplecrd.k8s.io/v1&quot;, ResourceVersion:&quot;23354&quot;, FieldPath:&quot;&quot;&#125;): type: &#x27;Normal&#x27; reason: &#x27;Synced&#x27; Network synced successfully</span><br></pre></td></tr></table></figure>
+
+
+
+<p>再修改一下YAML文件的内容，并提交更新，如下所示：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> example/example-network.yaml</span></span><br><span class="line">apiVersion: samplecrd.k8s.io/v1</span><br><span class="line">kind: Network</span><br><span class="line">metadata:</span><br><span class="line">  name: example-network</span><br><span class="line">spec:</span><br><span class="line">  cidr: &quot;192.168.0.0/16&quot;</span><br><span class="line">  gateway: &quot;192.168.1.1&quot;</span><br><span class="line"><span class="meta prompt_">  </span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl apply -f example/example-network.yaml</span></span><br><span class="line">network.samplecrd.k8s.io/example-network configured</span><br></pre></td></tr></table></figure>
+
+<p>这时候，查看一下控制器的日志：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">I0617 09:32:57.516092    5389 controller.go:189] [Neutron] Try to process network: &amp;v1.Network&#123;TypeMeta:v1.TypeMeta&#123;Kind:&quot;&quot;, APIVersion:&quot;&quot;&#125;, ObjectMeta:v1.ObjectMeta&#123;Name:&quot;example-network&quot;, GenerateName:&quot;&quot;, Namespace:&quot;default&quot;, SelfLink:&quot;/apis/samplecrd.k8s.io/v1/namespaces/default/networks/example-network&quot;, UID:&quot;597cfbff-00f0-447c-a8d5-6cec45c26222&quot;, ResourceVersion:&quot;24722&quot;, Generation:4, CreationTimestamp:time.Date(2022, time.June, 17, 9, 23, 31, 0, time.Local), DeletionTimestamp:&lt;nil&gt;, DeletionGracePeriodSeconds:(*int64)(nil), Labels:map[string]string(nil), Annotations:map[string]string&#123;&quot;kubectl.kubernetes.io/last-applied-configuration&quot;:&quot;&#123;\&quot;apiVersion\&quot;:\&quot;samplecrd.k8s.io/v1\&quot;,\&quot;kind\&quot;:\&quot;Network\&quot;,\&quot;metadata\&quot;:&#123;\&quot;annotations\&quot;:&#123;&#125;,\&quot;name\&quot;:\&quot;example-network\&quot;,\&quot;namespace\&quot;:\&quot;default\&quot;&#125;,\&quot;spec\&quot;:&#123;\&quot;cidr\&quot;:\&quot;192.168.0.0/16\&quot;,\&quot;gateway\&quot;:\&quot;192.168.1.1\&quot;&#125;&#125;\n&quot;&#125;, OwnerReferences:[]v1.OwnerReference(nil), Initializers:(*v1.Initializers)(nil), Finalizers:[]string(nil), ClusterName:&quot;&quot;&#125;, Spec:v1.NetworkSpec&#123;Cidr:&quot;192.168.0.0/16&quot;, Gateway:&quot;192.168.1.1&quot;&#125;&#125; ...</span><br><span class="line">I0617 09:32:57.516378    5389 controller.go:155] Successfully sync &#x27;default/example-network&#x27;</span><br><span class="line">I0617 09:32:57.516393    5389 event.go:221] Event(v1.ObjectReference&#123;Kind:&quot;Network&quot;, Namespace:&quot;default&quot;, Name:&quot;example-network&quot;, UID:&quot;597cfbff-00f0-447c-a8d5-6cec45c26222&quot;, APIVersion:&quot;samplecrd.k8s.io/v1&quot;, ResourceVersion:&quot;24722&quot;, FieldPath:&quot;&quot;&#125;): type: &#x27;Normal&#x27; reason: &#x27;Synced&#x27; Network synced successfully</span><br></pre></td></tr></table></figure>
+
+
+
+<p>最后，删除这个对象：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl delete -f example/example-network.yaml</span></span><br><span class="line">network.samplecrd.k8s.io &quot;example-network&quot; deleted</span><br></pre></td></tr></table></figure>
+
+<p>这时候，查看一下控制器的日志：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">W0617 09:35:56.386759   11958 controller.go:180] Network: default/example-network does not exist in local cache, will delete it from Neutron ...</span><br><span class="line">I0617 09:35:56.386790   11958 controller.go:182] [Neutron] Deleting network: default/example-network ...</span><br><span class="line">I0617 09:35:56.386797   11958 controller.go:155] Successfully sync &#x27;default/example-network&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>这一次，在控制器的日志里，可以看到<code>Informer</code>注册的“删除”事件被触发，并且控制循环“调用”<code>Neutron API</code>“删除”了真实环境里的网络。</p>
+<h3 id="Expand"><a href="#Expand" class="headerlink" title="Expand"></a>Expand</h3><p>实际上，这套流程不仅可以用在自定义API资源上，也完全可以用在<code>Kubernetes</code>原生的默认<code>API</code>对象上。</p>
+<p>比如，在<code>main</code>函数里，除了创建一个<code>Network Informer</code>外，还可以初始化一个<code>Kubernetes</code>默认<code>API</code>对象的 <code>Informer</code>工厂，比如<code>Deployment</code>对象的<code>Informer</code>。具体做法如下所示：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  ...</span><br><span class="line">  </span><br><span class="line">  kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*<span class="number">30</span>)</span><br><span class="line">  </span><br><span class="line">  controller := NewController(kubeClient, exampleClient,</span><br><span class="line">  kubeInformerFactory.Apps().V1().Deployments(),</span><br><span class="line">  networkInformerFactory.Samplecrd().V1().Networks())</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">go</span> kubeInformerFactory.Start(stopCh)</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这段代码里，首先使用<code>Kubernetes</code>的<code>client</code>（<code>kubeClient</code>）创建了一个工厂；</p>
+<p>然后，用跟<code>Network</code>类似的处理方法，生成了一个<code>Deployment Informer</code>；</p>
+<p>接着，把<code>Deployment Informer</code>传递给了自定义控制器；当然，还需要调用<code>Start</code>方法来启动这个<code>Deployment Informer</code>。</p>
+<p>而有了这个<code>Deployment Informer</code>后，这个控制器也就持有了所有<code>Deployment</code>对象的信息。接下来，它既可以通过<code>deploymentInformer.Listener()</code>来获取<code>Etcd</code>里所有<code>Deployment</code>对象，也可用为这个<code>Deployment Informer</code>注册具体的<code>Handler</code>。</p>
+<p>更重要的是，这就使得在这个自定义控制器里面，可以通过对自定义API对象和默认API对象进行协同，从而实现更加复杂的编排功能。</p>
+<p>比如：用户每创建一个新的<code>Deployment</code>，这个自定义控制器，就可以为它创建一个对应的<code>Network</code>供它使用。</p>
+<h3 id="Summary-1"><a href="#Summary-1" class="headerlink" title="Summary"></a>Summary</h3><p>所谓的<code>Informer</code>，就是一个自带缓存和索引机制，可以触发<code>Handler</code>的客户端库。这个本地缓存在<code>Kubernetes</code>中一般被称为<code>Store</code>，索引一般被称为<code>Index</code>。</p>
+<p><code>Informer</code>使用了<code>Reflector</code>包，它是一个可以通过<code>ListAndWatch</code>机制获取并监视<code>API</code>对象变化的客户端封装。</p>
+<p><code>Reflector</code>和<code>Informer</code>之间，用到了一个“增量先进先出队列”进行协同。而<code>Informer</code>与需要编写的控制循环之间，则使用了一个工作队列来进行协同。</p>
+<p>在实际应用中，除了控制循环之外的所有代码，实际上都是<code>Kubernetes</code>自动生成的，即：<code>pkg/client/&#123;informers, listers, clientset&#125;</code>里的内容。</p>
+<p>而这些自动生成的代码，就为我们提供了一个可靠而高效地获取 API 对象“期望状态”的编程库。</p>
+<p>所以，接下来，作为开发者，只需要关注如何拿到“实际状态”，然后如何拿它去跟“期望状态”做对比，从而决定接下来要做的业务逻辑即可。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.parak.top">Khighness</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.parak.top/posts/55155">https://www.parak.top/posts/55155</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 </a>许可协议。转载请注明来自<a href="https://www.parak.top">炒菜K殿下</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Kubernetes/">Kubernetes</a></div><div class="post_share"><div class="social-share" data-image="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-78.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/42549/"><img class="prev-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-79.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Time-1-NTP协议</div></div></a></div><div class="next-post pull-right"><a href="/posts/64083/"><img class="next-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-77.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Kubernetes-Job</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/64083/" title="Kubernetes-Job"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-77.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-07</div><div class="title">Kubernetes-Job</div></div></a></div><div><a href="/posts/24948/" title="Kubernetes-DaemonSet"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-76.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-06</div><div class="title">Kubernetes-DaemonSet</div></div></a></div><div><a href="/posts/4208/" title="Kubernetes-StatefulSet"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-75.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-05</div><div class="title">Kubernetes-StatefulSet</div></div></a></div><div><a href="/posts/63660/" title="Kubernetes-ReplicaSet"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-74.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-04</div><div class="title">Kubernetes-ReplicaSet</div></div></a></div><div><a href="/posts/16371/" title="Kubernetes-Pod"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-73.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-03</div><div class="title">Kubernetes-Pod</div></div></a></div><div><a href="/posts/44589/" title="Kubernetes-Cluster"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-72.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-02</div><div class="title">Kubernetes-Cluster</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Use-API"><span class="toc-text">Use API</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Concept"><span class="toc-text">Concept</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Practice"><span class="toc-text">Practice</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Problem"><span class="toc-text">Problem</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Meaning"><span class="toc-text">Meaning</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Istio"><span class="toc-text">Istio</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Example"><span class="toc-text">Example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Basic-Principle"><span class="toc-text">Basic Principle</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Other-Method"><span class="toc-text">Other Method</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#API%E2%80%99s-secret"><span class="toc-text">API’s secret</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Design"><span class="toc-text">Design</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Problem-1"><span class="toc-text">Problem</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CRD"><span class="toc-text">CRD</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Custom-Controller"><span class="toc-text">Custom Controller</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Main-Function"><span class="toc-text">Main Function</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Working-Principle"><span class="toc-text">Working Principle</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Build-and-Run"><span class="toc-text">Build and Run</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Expand"><span class="toc-text">Expand</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Summary-1"><span class="toc-text">Summary</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background: gray"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By Khighness</div><div class="footer_custom_text"><a href="https://www.foreverblog.cn/" target="_blank" > <img src="https://img.foreverblog.cn/logo_en_default.png" alt="" style="width:auto;height:16px;"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'Py2eOHzSdrnxKPzKrOJaHJOq-9Nh9j0Va',
+      appKey: '9eQhwuCgyshpYKn4rtEhqt4R',
+      placeholder: '',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: true,
+      serverURLs: '',
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/Khighness/cdn/js/emotion.json',
+      emojiMaps: "",
+      enableQQ: true,
+      path: window.location.pathname,
+      requiredFields: ["nick, mail"],
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://unpkg.com/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="//code.tidio.co/ao1f4qdjllf8yowzz7v5brdaejt42uoi.js" async="async"></script><script>function onTidioChatApiReady() {
+  window.tidioChatApi.hide();
+  window.tidioChatApi.on("close", function() {
+    window.tidioChatApi.hide();
+  });
+}
+if (window.tidioChatApi) {
+  window.tidioChatApi.on("ready", onTidioChatApiReady);
+} else {
+  document.addEventListener("tidioChat-ready", onTidioChatApiReady);
+}
+
+var chatBtnFn = () => {
+  document.getElementById("chat_btn").addEventListener("click", function(){
+    window.tidioChatApi.show();
+    window.tidioChatApi.open();
+  });
+}
+chatBtnFn()
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>function history_calendar_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-history"><div class="card-content"><div class="item-headline"><i class="fas fa-clock fa-spin"></i><span>那年今日</span></div><div id="history-baidu" style="height: 100px;overflow: hidden"><div class="history_swiper-container" id="history-container" style="width: 100%;height: 100%"><div class="swiper-wrapper" id="history_container_wrapper" style="height:20px"></div></div></div></div>';
+                console.log('已挂载history_calendar')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            history_calendar_injector_config()
+        } </script><script data-pjax  src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script><script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/js/main.js"></script><!-- hexo injector body_end end --></body></html>

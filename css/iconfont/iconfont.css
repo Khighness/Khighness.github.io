@@ -1,0 +1,115 @@
+@font-face {
+  font-family: "iconfont"; /* Project id 2495273 */
+  src: url('iconfont.woff2?t=1622268412543') format('woff2'),
+       url('iconfont.woff?t=1622268412543') format('woff'),
+       url('iconfont.ttf?t=1622268412543') format('truetype');
+}
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Index */
+.icon-index:before {
+  content: "\e60f";
+  color:deepskyblue;
+}
+/* Archive */
+.icon-tianchongxing-1:before {
+  content: "\e646";
+  color: pink;
+}
+/* Tag */
+.icon-tianchongxing-:before {
+  content: "\e63c";
+  color: springgreen;
+}
+/* Category */
+.icon-fenlei:before {
+  content: "\e654";
+  color: skyblue;
+}
+/* Link */
+.icon-ziyuan:before {
+  content: "\e61a";
+  color: coral;
+}
+/* K */
+.icon-K:before {
+  content: "\e622";
+  color: orange;
+}
+
+/* Search */
+.icon-sousuo:before {
+  content: "\e609";
+}
+/* Say */
+.icon-icon-test:before {
+  content: "\e61b";
+}
+/* Ball */
+.icon-ball-01:before {
+  content: "\e60e";
+}
+/* Direct */
+.icon-direction_huaban1:before {
+  content: "\e610";
+}
+
+
+
+/* Github */
+.icon-github:before {
+  content: "\e629";
+  color: black;
+}
+/* LeetCode */
+.icon-leetcode:before {
+  content: "\ebf2";
+  color: gray;
+}
+/* Weibo */
+.icon-weibo:before {
+  content: "\e633";
+  color: rgb(255, 154, 48);
+}
+/* Gmail */
+.icon-gmail:before {
+  content: "\e95f";
+  color: red;
+}
+/* QQ */
+.icon-qq1:before {
+  content: "\e69b";
+  color: #b3d4fc;
+}
+/* WeChat */
+.icon-wechat:before {
+  content: "\e6ca";
+  color: rgb(60, 176, 53);
+}
+/* YuQue */
+.icon-tubiaozhizuomoban:before {
+  content: "\e625";
+  color: aquamarine;
+}
+/* ZhiHu */
+.icon-zhihu:before {
+  content: "\e600";
+  color: dodgerblue;
+}
+/* BiliBili*/
+.icon-bilibili-fill:before {
+  content: "\e62a";
+  color: cornflowerblue;
+}
+/* RSS */
+.icon-rss:before {
+  content: "\e6eb";
+  color: pink;
+}

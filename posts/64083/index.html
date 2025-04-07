@@ -1,0 +1,466 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kubernetes-Job | Khighness</title><meta name="keywords" content="Kubernetes"><meta name="author" content="Khighness"><meta name="copyright" content="Khighness"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="学习Kubernetes离线业务编排对象Job和Job Controller的执行原理，并通过实践学习Job对象三种常见的使用方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes-Job">
+<meta property="og:url" content="https://www.parak.top/posts/64083/index.html">
+<meta property="og:site_name" content="Khighness">
+<meta property="og:description" content="学习Kubernetes离线业务编排对象Job和Job Controller的执行原理，并通过实践学习Job对象三种常见的使用方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-77.jpg">
+<meta property="article:published_time" content="2022-06-06T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-07-06T15:14:36.892Z">
+<meta property="article:author" content="Khighness">
+<meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-77.jpg"><link rel="shortcut icon" href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/K.jpg"><link rel="canonical" href="https://www.parak.top/posts/64083/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//s4.cnzz.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?16576652";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script async="async" data-pjax="data-pjax" src="https://s4.cnzz.com/z_stat.php?id=1279324689&amp;web_id=1279324689"></script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Khighness","link":"链接: ","source":"来源: Khighness","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-07-06 23:14:36'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/background.css"><link rel="stylesheet" href="/css/iconfont/iconfont.css"><link rel="stylesheet" href="/css/mouse.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/css/main.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Khighness" type="application/atom+xml">
+</head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/Khighness.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">93</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">40</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-77.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Khighness</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Kubernetes-Job</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-06-06T16:00:00.000Z" title="发表于 2022-06-07 00:00:00">2022-06-07</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-07-06T15:14:36.892Z" title="更新于 2022-07-06 23:14:36">2022-07-06</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Kubernetes/">Kubernetes</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">3.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>13分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Kubernetes-Job"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="History"><a href="#History" class="headerlink" title="History"></a>History</h2><p>Deployment、StatefulSet和DaemonSet主要编排的对象，都是在线业务，即长作业（Long Runing Task），比如Nginx和MySQL等。这些应用一旦运行起来，除非出错或者停止，它的容器进程会一直保持在Running状态。</p>
+<p>而对于离线业务，或者叫作计算业务（Batch Job），这种业务在计算完成后就直接退出了，而此时如果依然是用Deployment来管理这种业务的话，就会发现Pod会在计算结束后退出，然后被Deployment Controller不断地重启；而像滚动更新这样的功能，更无从谈起了。</p>
+<p>所以，早在Borg项目中，Google就已经对作业进行了分类处理，提出了LRS（Long Running Service）和Batch Jobs两种作业形态，对它们进行“分别管理”和“混合调度”。</p>
+<h2 id="Job"><a href="#Job" class="headerlink" title="Job"></a>Job</h2><p>Job API对象的定义非常简单，举个例子，如下所示：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Job</span></span><br><span class="line"><span class="attr">metadata:</span> </span><br><span class="line">  <span class="attr">name:</span> <span class="string">pi</span></span><br><span class="line"><span class="attr">spec:</span> </span><br><span class="line">  <span class="attr">template:</span> </span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">pi</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">resouer/ubuntu-bc</span></span><br><span class="line">        <span class="attr">command:</span> [<span class="string">&quot;sh&quot;</span>, <span class="string">&quot;-c&quot;</span>, <span class="string">&quot;echo &#x27;scale=10000; 4*a(1)&#x27; | bc -l&quot;</span>]</span><br><span class="line">      <span class="attr">restartPolicy:</span> <span class="string">Never</span></span><br><span class="line">  <span class="attr">backoffLimit:</span> <span class="number">4</span></span><br></pre></td></tr></table></figure>
+
+<p>在这个Job的YAML文件里，<code>spec.template</code>字段定义了Pod模板。这个Pod模板定义了一个Ubuntu镜像的容器，它运行的程序是：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;scale=10000; 4*a(1)&quot; | bc -l</span><br></pre></td></tr></table></figure>
+
+<p><code>bc</code>命令是Linux的计算器；<code>-l</code>表示使用标准数学库；<code>a(1)</code>表示调用数学库中的<code>arctangent</code>函数，计算<code>atan(1)</code>。</p>
+<p>中学知识中，tan(π/4) = 1，那么，4*atan(1) = π。所以这就是一个计算π值的容器，通过<code>scale=10000</code>指定了输出的小数点后的位数是10000。</p>
+<h2 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h2><p>创建上面的Job对象：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl create -f pi-job.yaml</span> </span><br></pre></td></tr></table></figure>
+
+<p>创建成功后，查看一下这个Job对象，如下所示：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl describe <span class="built_in">jobs</span>/pi</span></span><br><span class="line">Name:             pi</span><br><span class="line">Namespace:        default</span><br><span class="line">Selector:         controller-uid=9bb33016-b732-46c7-b682-1bce756ad9a7</span><br><span class="line">Labels:           controller-uid=9bb33016-b732-46c7-b682-1bce756ad9a7</span><br><span class="line">                  job-name=pi</span><br><span class="line">Annotations:      &lt;none&gt;</span><br><span class="line">Parallelism:      1</span><br><span class="line">Completions:      1</span><br><span class="line">Completion Mode:  NonIndexed</span><br><span class="line">Start Time:       Mon, 28 Mar 2022 12:16:19 +0800</span><br><span class="line">Pods Statuses:    1 Running / 0 Succeeded / 0 Failed</span><br><span class="line">Pod Template:</span><br><span class="line">  Labels:  controller-uid=9bb33016-b732-46c7-b682-1bce756ad9a7</span><br><span class="line">           job-name=pi</span><br><span class="line">  Containers:</span><br><span class="line">   pi:</span><br><span class="line">    Image:      resouer/ubuntu-bc</span><br><span class="line">    Port:       &lt;none&gt;</span><br><span class="line">    Host Port:  &lt;none&gt;</span><br><span class="line">    Command:</span><br><span class="line">      sh</span><br><span class="line">      -c</span><br><span class="line">      echo &#x27;scale=10000; 4*a(1)&#x27; | bc -l</span><br><span class="line">    Environment:  &lt;none&gt;</span><br><span class="line">    Mounts:       &lt;none&gt;</span><br><span class="line">  Volumes:        &lt;none&gt;</span><br><span class="line">Events:</span><br><span class="line">  Type    Reason            Age   From            Message</span><br><span class="line">  ----    ------            ----  ----            -------</span><br><span class="line">  Normal  SuccessfulCreate  21s   job-controller  Created pod: pi--1-q7tcm</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这个Job对象在创建后，它的Pod模板，被自动加上了一个controller-uid=&lt;一个随机字符串&gt;这样的Label。而这个Job对象本身，则被自动加上了这个Label对应的Selector，从而保证了Job与它所管理的Pod之间的匹配关系。</p>
+<p>而Job Controller之所以要使用这种携带了UID的Label，就是为了避免不同Job对象所管理的Pod发生重合。需要注意的是，这种自动生成的Label对用户来说并不友好，所以不太适合推广到Deployment等长作业编排对象上。</p>
+<p>接下来，可以看到这个Job创建的Pod进入了Running状态，这意味着它正在计算Pi的值。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods</span></span><br><span class="line">NAME          READY   STATUS      RESTARTS   AGE</span><br><span class="line">pi--1-q7tcm   1/1     Running   0          10s</span><br></pre></td></tr></table></figure>
+
+<p>而几分钟后计算结束，这个Pod就会进入Completed状态：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods</span></span><br><span class="line">NAME          READY   STATUS      RESTARTS   AGE</span><br><span class="line">pi--1-q7tcm   0/1     Completed   0          9m29s</span><br></pre></td></tr></table></figure>
+
+<p>这也是需要在Pod模板中定义restartPolicy=Never的原因；离线计算的Pod永远都不应该被重启，否则它们会再重新计算一遍。</p>
+<blockquote>
+<p>事实上，restartPolicy在Job对象里之允许被设置为Never和OnFailure；而在Deployment对象里，restartPolicy只允许被设置为Always。</p>
+</blockquote>
+<p>此时，可以通过<code>kubectl logs</code>查看一下这个Pod的日志，就可以看到计算得到的Pi值已经被打印出来了：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"> kubectl logs pi--1-q7tcm</span></span><br><span class="line">3.141592653589793238462643383279502884197169399375105820974944592307\</span><br><span class="line">81640628620899862803482534211706798214808651328230664709384460955058...</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Problem"><a href="#Problem" class="headerlink" title="Problem"></a>Problem</h2><p>（1）上面计算Pi值的Job无法restart，那么这个离线作业失败了怎么办？</p>
+<p>离线作业失败后，Job Controller就会不断地尝试创建一个新Pod，如下所示：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods</span></span><br><span class="line">NAME                                READY     STATUS              RESTARTS   AGE</span><br><span class="line">pi-55h89                            0/1       ContainerCreating   0          2s</span><br><span class="line">pi-tqbcz                            0/1       Error               0          5s</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这时候会不断有新Pod被创建出来。</p>
+<p>当然，这个尝试肯定不能无限进行，<code>spec.backoffLimit</code>字段里定义了重试次数为4，这个字段的默认值是6。</p>
+<p>需要注意的是，Job Controller重新创建Pod的间隔是呈指数增加的，即下一次重新创建Pod的动作会分别发生在10s、20s、40s ···后。</p>
+<p>而如果定义的restartPolicy=OnFailure，那么离线作业失败后，Job Controller就不会去尝试创建新的Pod。但是，它会不断地尝试重启Pod里的容器。</p>
+<p>（2）当一个Job的Pod运行结束后，它会进入Completed状态。但是，如果这个Pod因为某种原因一直不肯结束呢？</p>
+<p>在Job的API对象里，有一个<code>spec.activeDeadlineSeconds</code>字段可以设置最长运行时间，比如：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">backoffLimit:</span> <span class="number">5</span></span><br><span class="line">  <span class="attr">activeDeadlineSeconds:</span> <span class="number">100</span></span><br></pre></td></tr></table></figure>
+
+<p>一旦运行超过100s，这个Pod的所有Pod都会被终止。并且，可以在Pod的状态里看到终止的原因是 reason: DeadlineExceeded。</p>
+<h2 id="Job-Controller"><a href="#Job-Controller" class="headerlink" title="Job Controller"></a>Job Controller</h2><p>在Job对象中，负责并行控制的参数有两个：</p>
+<ol>
+<li>spec.parallelism，它定义的是一个Job在任意时间最多可以启动多少个Pod同时运行；</li>
+<li>spec.completions，它定义的是Job至少要完成的Pod数目，即Job的最小完成数。</li>
+</ol>
+<p>在上面计算Pi的Job里，添加这两个字段：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">...</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">parallelism:</span> <span class="number">2</span></span><br><span class="line">  <span class="attr">completions:</span> <span class="number">4</span></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
+
+<p>创建这个Job对象：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl create -f pi-job.yaml</span></span><br></pre></td></tr></table></figure>
+
+<p>查看Job的Pod状态：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods</span></span><br><span class="line">NAME          READY   STATUS    RESTARTS   AGE</span><br><span class="line">pi--1-gcdqf   1/1     Running   0          11s</span><br><span class="line">pi--1-qbnm8   1/1     Running   0          11s</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这个Job首先创建了两个并行运行的Pod来计算Pi。</p>
+<p>大概两分钟后，这两个Pod相继完成计算。</p>
+<p>再次查看Pod状态：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods</span></span><br><span class="line">NAME          READY   STATUS      RESTARTS   AGE</span><br><span class="line">pi--1-96x59   0/1     Pending     0          20s</span><br><span class="line">pi--1-bmdhn   0/1     Pending     0          20s</span><br><span class="line">pi--1-gcdqf   0/1     Completed   0          2m</span><br><span class="line">pi--1-qbnm8   0/1     Completed   0          2m</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods</span></span><br><span class="line">NAME          READY   STATUS              RESTARTS   AGE</span><br><span class="line">pi--1-96x59   0/1     ContainerCreating   0          30s</span><br><span class="line">pi--1-bmdhn   0/1     Pending             0          30s</span><br><span class="line">pi--1-gcdqf   0/1     ContainerCreating   0          2m10s</span><br><span class="line">pi--1-qbnm8   0/1     Completed           0          2m10s</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods</span></span><br><span class="line">NAME          READY   STATUS      RESTARTS   AGE</span><br><span class="line">pi--1-96x59   1/1     Running     0          50s</span><br><span class="line">pi--1-bmdhn   1/1     Running     0          50s</span><br><span class="line">pi--1-gcdqf   0/1     Completed   0          2m30s</span><br><span class="line">pi--1-qbnm8   0/1     Completed   0          2m30s</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，每当有一个Pod完成计算进入Completed状态时，就会有一个新的Pod被自动创建出来，并且快速地从Pending状态进入到ContainerCreating状态，紧接着都进入了Running状态。</p>
+<p>最终，完成计算任务后，都进入了Completed状态：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods</span></span><br><span class="line">NAME          READY   STATUS      RESTARTS   AGE</span><br><span class="line">pi--1-96x59   0/1     Completed   0          18m</span><br><span class="line">pi--1-bmdhn   0/1     Completed   0          18m</span><br><span class="line">pi--1-gcdqf   0/1     Completed   0          20m</span><br><span class="line">pi--1-qbnm8   0/1     Completed   0          20m</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get job</span> </span><br><span class="line">NAME   COMPLETIONS   DURATION   AGE</span><br><span class="line">pi     4/4           3m48s      20m</span><br></pre></td></tr></table></figure>
+
+
+
+<p>梳理Job Controller的工作原理：</p>
+<p>首先，Job Controller控制的对象，直接就是Pod。</p>
+<p>其次，Job Controller在控制循环中进行的调谐（Reconcile）操作，是根据实际在Running状态Pod的数目、已经成功退出的Pod的数目，以及parallelism、completions参数的值共同计算出在这个周期里，应该创建或者删除的Pod数目，然后调用Kubernetes API来执行这个操作。</p>
+<p>以创建Pod为例。在上面计算Pi的值这个例子中，当Job一开始创建出来时，实际处于Running状态Pod的数目、已经成功退出的Pod的数目，以及paralleism、completions参数的值共同计算出在这个周期里，应该创建或者删除的Pod数目，然后调用Kubernetes API来执行这个操作。</p>
+<p><strong>count(需要创建的Pod) = completions - count(Running状态的Pod) - count(Completed状态的Pod)</strong></p>
+<p>如果定义了parallelism，那么Job Controller会对上面的计算结果做一个修正，然后就并发地向kube-apiserver发起两个创建Pod的请求。如果在一个调谐周期里，Job Controller发现实际在Running状态的Pod数目，比parallelism还大，那么它就会删除一些Pod，使两者相等。</p>
+<h2 id="Extension"><a href="#Extension" class="headerlink" title="Extension"></a>Extension</h2><p>三种常用的、使用Job对象的方法。</p>
+<h3 id="Method1"><a href="#Method1" class="headerlink" title="Method1"></a>Method1</h3><p>第一种用法，也是醉简单粗暴的用法：外部管理器 + Job模板。</p>
+<p>这种模式的特定用法是：把Job的YAML文件定义为一个“模板”，然后用一个外部工具监控这些“模板”来生成Job。</p>
+<p>Job的定义方式如下所示：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Job</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">process-item-$ITEM</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">jobgroup:</span> <span class="string">jobexample</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">jobexample</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">jobgroup:</span> <span class="string">jobexample</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">c</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">        <span class="attr">command:</span> [<span class="string">&quot;sh&quot;</span>, <span class="string">&quot;-c&quot;</span>, <span class="string">&quot;echo Processing item $ITEM &amp;&amp; sleep 5&quot;</span>]</span><br><span class="line">      <span class="attr">restartPolicy:</span> <span class="string">Never</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到，在这个Job的YAML里，定义了<code>$ITEM</code>这样的变量。</p>
+<p>所以，在控制这种Job时，只要注意如下两个方面即可：</p>
+<ol>
+<li>创建Job时，替换掉<code>$ITEM</code>这样的变量；</li>
+<li>所有来自于同一个模板的Job，都有一个jobgroup:jobexample标签，也就是说这一组Job使用这样一个相同的标识。</li>
+</ol>
+<p>为了实现第一点，可以通过shell替换<code>$ITEM</code>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> ./jobs</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="keyword">for</span> i <span class="keyword">in</span> apple banana cherry</span></span><br><span class="line">do </span><br><span class="line">  cat job-tmpl | sed &quot;s/\$ITEM/$i/&quot; &gt; ./jobs/job-$i.yaml</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
+
+<p>这样，一组来自于同一个模板的不同Job的yaml就生成了。接下来，就可以通过一句<code>kubectl create</code>指令创建这些Job了：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl create -f ./jobs</span>    </span><br><span class="line">job.batch/process-item-apple created</span><br><span class="line">job.batch/process-item-banana created</span><br><span class="line">job.batch/process-item-cherry created</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods -l jobgroup=jobexample</span></span><br><span class="line">NAME                           READY   STATUS      RESTARTS   AGE</span><br><span class="line">process-item-apple--1-dvwbw    0/1     Completed   0          38s</span><br><span class="line">process-item-banana--1-jtdss   0/1     Completed   0          38s</span><br><span class="line">process-item-cherry--1-p6mvt   0/1     Completed   0          38s</span><br></pre></td></tr></table></figure>
+
+<p>这个模式看起来虽然很“傻”，但却是Kubernetes社区里使用Job的一个很普遍的模式。</p>
+<p>原因很简单：大多数用户在需要管理Batch Job的时候，都已经有了一套自己的方案，需要做的往往就是集成工作。这时候，Kubernetes项目对这些方案来说最有价值的，就是Job这个API对象。所以，只需要编写一个外部工具来管理这些Job即可。</p>
+<p>这种模式最典型的应用，就是TensorFlow社区的KubeFlow项目。</p>
+<p>很容易理解：在这种模式下使用Job对象，completions和parallslism这两个字段都应该使用默认值1，而不应该由我们自行设置。而作业Pod的并行控制，应该完全由外部工具来进行管理。</p>
+<h3 id="Method2"><a href="#Method2" class="headerlink" title="Method2"></a>Method2</h3><p>第二种用法：拥有固定任务数目的并行Job。</p>
+<p>这种模式下，只关心最后是否有指定数目（spec.completions）个任务成功退出。至于执行时的并行度是多少，并不需要关心。</p>
+<p>比如这个计算Pi值的例子，就是这样一个典型的、拥有固定任务数目（completions=4）的应用场景。它的parallslism值是2；或者，干脆不指定parallelism，直接使用默认的并行度（即：1）。</p>
+<p>此外，还可以使用一个工作队列（Work Queue）进行任务分发。这时，Job的YAML文件定义如下所示：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Job</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">	<span class="attr">name:</span> <span class="string">job-wq-1</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">	<span class="attr">completions:</span> <span class="number">8</span></span><br><span class="line">	<span class="attr">parallelism:</span> <span class="number">2</span></span><br><span class="line">	<span class="attr">template:</span></span><br><span class="line">		<span class="attr">metadata:</span></span><br><span class="line">			<span class="attr">name:</span> <span class="string">job-wq-1</span></span><br><span class="line">		<span class="attr">spec:</span></span><br><span class="line">			<span class="attr">containers:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="attr">name:</span> <span class="string">c</span></span><br><span class="line">			  <span class="attr">image:</span> <span class="string">myrepo/job-wq-1</span></span><br><span class="line">			  <span class="attr">env:</span></span><br><span class="line">			  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">BROKER_URL</span></span><br><span class="line">			    <span class="attr">value:</span> <span class="string">amqp://guest:guest@rabbitmq-service:5672</span></span><br><span class="line">			  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">QUEUE</span></span><br><span class="line">			    <span class="attr">value:</span> <span class="string">job1</span></span><br><span class="line">			<span class="attr">restartPolicy:</span> <span class="string">OnFailure</span></span><br></pre></td></tr></table></figure>
+
+<p>我们可以看到，它的completions的值是：8，这意味着我们总共要处理的任务数目是8个。也就是说，总共会有8个任务会被逐一放入工作队列里（可以运行一个外部小程序作为生产者，来提交任务）。</p>
+<p>在这个实例中，选择充当工作队列的说一个运行在Kubernetes里的RabbitMQ。所以，需要在Pod模板里定义BROKER_URL，来作为消费者。</p>
+<p>所以，一旦使用<code>kubectl create</code>创建了这个Job，它就会以并发度为2的方式，每两个Pod一组，创建出8个Pod。每个Pob都回去连接BROKER_URL，从RabbitMQ里领取任务，然后各自进行处理。这个Pod里的执行逻辑，可以用这样一段伪代码来表示：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">queue := newQueue($BROKER_URL, $QUEUE)</span><br><span class="line">task := queue.Pop()</span><br><span class="line">process(task)</span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，每个Pod只需要将任务信息读取出来，处理完成，然后退出即可。而作为用户，我只关心最终一共有8个计算任务启动并且退出，只要这个目标达成，我就可以认为整个Job处理完成了。所以说，这种用法，对应的就是“任务总数固定”的场景。</p>
+<h3 id="Method3"><a href="#Method3" class="headerlink" title="Method3"></a>Method3</h3><p>第三种用法，指定并行度，但不设置固定的completions的值。</p>
+<p>这种情况，就必须自己想办法，来决定什么启动新Pod，什么时候Job才算执行完成。任务的总数是未知的，所以不仅需要一个工作队列来负责任务分发，还需要能够判断工作队列已经为空。</p>
+<p>这时候，Job的定义基本上没变化，只不过是不再需要定义completions的值了而已：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Job</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">job-wq-2</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">parallelism:</span> <span class="number">2</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">job-wq-2</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">c</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">gcr.io/myproject/job-wq-2</span></span><br><span class="line">        <span class="attr">env:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">BROKER_URL</span></span><br><span class="line">          <span class="attr">value:</span> <span class="string">amqp://guest:guest@rabbitmq-service:5672</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">QUEUE</span></span><br><span class="line">          <span class="attr">value:</span> <span class="string">job2</span></span><br><span class="line">      <span class="attr">restartPolicy:</span> <span class="string">OnFailure</span></span><br></pre></td></tr></table></figure>
+
+<p>而对应的Pod逻辑会稍微复杂一些，可以用伪代码来描述：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> !queue.IsEmpty($BROKER, $QUEUE) &#123;</span><br><span class="line">  task := queue.Pop()</span><br><span class="line">  process(task)</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Queue empty, exiting&quot;</span>)</span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
+
+<p>由于任务数目的总数不固定，所以每一个Pod必须能够知道，自己什么时候可以退出。在这个例子中，简单地以“队列为空”，作为任务全部完成的标志。所以说，这种用法，对应的是“任务总数不固定”的场景。</p>
+<h2 id="CronJob"><a href="#CronJob" class="headerlink" title="CronJob"></a>CronJob</h2><p>CronJob描述的就是定时任务，它的API对象如下所示：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">CronJob</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">hello</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">schedule:</span> <span class="string">&quot;*/1 * * * *&quot;</span></span><br><span class="line">  <span class="attr">jobTemplate:</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">template:</span></span><br><span class="line">        <span class="attr">spec:</span></span><br><span class="line">          <span class="attr">containers:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">hello</span></span><br><span class="line">            <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">            <span class="attr">args:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">/bin/sh</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">-c</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">date;</span> <span class="string">echo</span> <span class="string">Hello</span> <span class="string">from</span> <span class="string">the</span> <span class="string">Kubernetes</span> <span class="string">cluster</span></span><br><span class="line">          <span class="attr">restartPolicy:</span> <span class="string">OnFailure</span></span><br></pre></td></tr></table></figure>
+
+<p>在这个YAML文件中，最重要的关键词就是jobTemplate，所以CronJob是一个Job对象的控制器（Controller）。</p>
+<p>其中schedule字段是一个标准的Unix Cron表达式，”*/1 * * * * *”表示每分钟执行一次。</p>
+<p>这个CronJob对象在创建1分钟后，就会有一个Job产生了，如下所示：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl create -f ./cronjob.yaml</span></span><br><span class="line">cronjob.batch/hello created</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">一分钟后</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get pods</span></span><br><span class="line">hello-27477146--1-c5pdt        0/1     Completed   0          10s</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get cronjob hello</span></span><br><span class="line">NAME    SCHEDULE      SUSPEND   ACTIVE   LAST SCHEDULE   AGE</span><br><span class="line">hello   */1 * * * *   False     0        35s             66s</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，由于定时任务的特殊性，很可能某个Job还没有执行完，另外一个新Job就产生了。这时候，可以通过spec.concurrencyPolicy字段来定义具体的处理策略。比如：</p>
+<ol>
+<li>concurrencyPolicy=Allow，这也是默认情况，这意味着这些Pod可以同时存在；</li>
+<li>concurrencyPolicy=Forbid，这意味着不会创建新的Pod，该创建周期被跳过；</li>
+<li>concurrencyPolicy=Replace，这意味着新产生的Job会替换旧的、没有执行完的Job。</li>
+</ol>
+<p>而如果某一次Job创建失败，这次创建就会被标记为”miss”。当在指定的时间窗口内，miss的数目达到100（写死的）时，那么CronJob会停止再创建这个Job。</p>
+<p>这个时间窗口内，可以由spec.startingDeadlineSeconds字段指定。比如startingDeadlineSeconds=200，意味着在过去200s里，如果miss的数目达到了100个，那么这个Job就不会被创建执行了。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.parak.top">Khighness</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.parak.top/posts/64083">https://www.parak.top/posts/64083</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 </a>许可协议。转载请注明来自<a href="https://www.parak.top">炒菜K殿下</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Kubernetes/">Kubernetes</a></div><div class="post_share"><div class="social-share" data-image="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-77.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/55155/"><img class="prev-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-78.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Kubernetes-API</div></div></a></div><div class="next-post pull-right"><a href="/posts/24948/"><img class="next-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-76.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Kubernetes-DaemonSet</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/55155/" title="Kubernetes-API"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-78.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-08</div><div class="title">Kubernetes-API</div></div></a></div><div><a href="/posts/24948/" title="Kubernetes-DaemonSet"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-76.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-06</div><div class="title">Kubernetes-DaemonSet</div></div></a></div><div><a href="/posts/4208/" title="Kubernetes-StatefulSet"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-75.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-05</div><div class="title">Kubernetes-StatefulSet</div></div></a></div><div><a href="/posts/63660/" title="Kubernetes-ReplicaSet"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-74.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-04</div><div class="title">Kubernetes-ReplicaSet</div></div></a></div><div><a href="/posts/16371/" title="Kubernetes-Pod"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-73.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-03</div><div class="title">Kubernetes-Pod</div></div></a></div><div><a href="/posts/44589/" title="Kubernetes-Cluster"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-72.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-02</div><div class="title">Kubernetes-Cluster</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#History"><span class="toc-text">History</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Job"><span class="toc-text">Job</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Practice"><span class="toc-text">Practice</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Problem"><span class="toc-text">Problem</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Job-Controller"><span class="toc-text">Job Controller</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Extension"><span class="toc-text">Extension</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Method1"><span class="toc-text">Method1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Method2"><span class="toc-text">Method2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Method3"><span class="toc-text">Method3</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CronJob"><span class="toc-text">CronJob</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background: gray"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By Khighness</div><div class="footer_custom_text"><a href="https://www.foreverblog.cn/" target="_blank" > <img src="https://img.foreverblog.cn/logo_en_default.png" alt="" style="width:auto;height:16px;"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'Py2eOHzSdrnxKPzKrOJaHJOq-9Nh9j0Va',
+      appKey: '9eQhwuCgyshpYKn4rtEhqt4R',
+      placeholder: '',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: true,
+      serverURLs: '',
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/Khighness/cdn/js/emotion.json',
+      emojiMaps: "",
+      enableQQ: true,
+      path: window.location.pathname,
+      requiredFields: ["nick, mail"],
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://unpkg.com/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="//code.tidio.co/ao1f4qdjllf8yowzz7v5brdaejt42uoi.js" async="async"></script><script>function onTidioChatApiReady() {
+  window.tidioChatApi.hide();
+  window.tidioChatApi.on("close", function() {
+    window.tidioChatApi.hide();
+  });
+}
+if (window.tidioChatApi) {
+  window.tidioChatApi.on("ready", onTidioChatApiReady);
+} else {
+  document.addEventListener("tidioChat-ready", onTidioChatApiReady);
+}
+
+var chatBtnFn = () => {
+  document.getElementById("chat_btn").addEventListener("click", function(){
+    window.tidioChatApi.show();
+    window.tidioChatApi.open();
+  });
+}
+chatBtnFn()
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>function history_calendar_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-history"><div class="card-content"><div class="item-headline"><i class="fas fa-clock fa-spin"></i><span>那年今日</span></div><div id="history-baidu" style="height: 100px;overflow: hidden"><div class="history_swiper-container" id="history-container" style="width: 100%;height: 100%"><div class="swiper-wrapper" id="history_container_wrapper" style="height:20px"></div></div></div></div>';
+                console.log('已挂载history_calendar')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            history_calendar_injector_config()
+        } </script><script data-pjax  src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script><script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/js/main.js"></script><!-- hexo injector body_end end --></body></html>

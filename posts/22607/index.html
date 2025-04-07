@@ -1,0 +1,609 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JVM-2(类加载子系统) | Khighness</title><meta name="keywords" content="Java"><meta name="author" content="Khighness"><meta name="copyright" content="Khighness"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="初步熟悉类加载子系统和类的加载过程，学习了三大类加载器和双亲委派机制。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM-2(类加载子系统)">
+<meta property="og:url" content="https://www.parak.top/posts/22607/index.html">
+<meta property="og:site_name" content="Khighness">
+<meta property="og:description" content="初步熟悉类加载子系统和类的加载过程，学习了三大类加载器和双亲委派机制。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-31.jpg">
+<meta property="article:published_time" content="2021-05-18T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-13T04:01:56.221Z">
+<meta property="article:author" content="Khighness">
+<meta property="article:tag" content="Java">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-31.jpg"><link rel="shortcut icon" href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/K.jpg"><link rel="canonical" href="https://www.parak.top/posts/22607/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//s4.cnzz.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?16576652";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script async="async" data-pjax="data-pjax" src="https://s4.cnzz.com/z_stat.php?id=1279324689&amp;web_id=1279324689"></script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Khighness","link":"链接: ","source":"来源: Khighness","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-01-13 12:01:56'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/background.css"><link rel="stylesheet" href="/css/iconfont/iconfont.css"><link rel="stylesheet" href="/css/mouse.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/css/main.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Khighness" type="application/atom+xml">
+</head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/Khighness.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">93</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">40</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-31.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Khighness</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">JVM-2(类加载子系统)</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-05-18T16:00:00.000Z" title="发表于 2021-05-19 00:00:00">2021-05-19</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-01-13T04:01:56.221Z" title="更新于 2022-01-13 12:01:56">2022-01-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/JVM/">JVM</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="JVM-2(类加载子系统)"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="2-1-📓类加载子系统"><a href="#2-1-📓类加载子系统" class="headerlink" title="2.1 📓类加载子系统"></a>2.1 📓类加载子系统</h2><blockquote>
+<p>📷 类加载子系统图示</p>
+</blockquote>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/22607/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%AD%90%E7%B3%BB%E7%BB%9F.svg" class="" title="类加载子系统"><br />
+
+
+
+<blockquote>
+<p>🔨 类加载子系统作用</p>
+</blockquote>
+<ul>
+<li>类加载子系统负责从文件系统或者网络中加载class文件，class文件在文件开头有特定的文件标识。</li>
+<li>ClassLoader只负责class文件的加载，至于它是否可以运行，则由Execution Engine(执行引擎)决定。</li>
+<li>加载的类信息存放于一块称为方法区的内存空间。除了类的信息以外，方法区中还会有存放运行时常量池信息，可能还包括字符串面量和数字常量。</li>
+</ul>
+<h2 id="2-2-🚀类的加载过程"><a href="#2-2-🚀类的加载过程" class="headerlink" title="2.2 🚀类的加载过程"></a>2.2 🚀类的加载过程</h2><blockquote>
+<p>📄 类的加载器-ClassLoader</p>
+</blockquote>
+<ol>
+<li>class file存在于本地硬盘上，可以理解为设计师画在纸上的模板，而最终这个模板在执行的时候是要加载到JVM当中来根据这个文件实例化出n个一模一样的实例。</li>
+<li>class file加载到JVM中，被称为DNA元数据模板，放在方法区。</li>
+<li>在.class文件 -&gt; JVM -&gt; 最终成为元数据模板，此过程就要一个运输工具(类装载器ClassLoader)，扮演一个快递员的角色。</li>
+</ol>
+<blockquote>
+<p>⏰ 类的加载过程</p>
+</blockquote>
+<div class="mermaid">graph LR
+A(开始)
+B{装载类}
+C{链接}
+D[初始化]
+E[调用main]
+F(结束)
+G{ClassLoader装载顺利}
+H[输出异常]
+A --&gt; B
+B --&gt; |Yes| C
+C --&gt; D
+D --&gt; E
+E --&gt; F
+B --&gt; |No| G
+G --&gt; |Yes| C
+G --&gt; |No| H</div>
+
+<ol>
+<li>加载<ol>
+<li>通过一个类的全限定名获取定义此类的二进制字节流。</li>
+<li>将这个字节流所代表的静态存储结构转化为方法区的运行时数据结构。</li>
+<li>在内存中生成一个代表这个类的java.lang.Class对象，作为方法区这个类的各种数据的访问入口。</li>
+</ol>
+</li>
+<li>链接<ol>
+<li>验证<ul>
+<li> 目的在于确保Class文件的字节流中包含信息符合当前虚拟机要求，保证被加载类的正确性，不会危害虚拟机自身安全。</li>
+<li> 主要包括四种验证：文件格式验证，元数据验证，字节码验证，符号引用验证。</li>
+</ul>
+</li>
+<li>准备<ul>
+<li>为类变量分配内存并且设置该类变量的默认初始值，即零值。</li>
+<li>这里不包含用final修饰的static，因为final在编译的时候就会分配了，准备阶段会显式初始化。</li>
+<li>这里不会为实例变量分配初始化，类变量会分配在方法区中，而实例变量是会随着对象一起分配到Java堆中。</li>
+</ul>
+</li>
+<li>解析<ul>
+<li>将常量池内的符号引用转换为直接引用的过程。</li>
+<li>事实上，解析操作往往会伴随着JVM在执行完初始化之后再执行。</li>
+<li>符号引用就是一组符号来描述所引用的目标。符号引用的字面量形式明确定义在Java虚拟机规范的Class文件格式中。直接引用就是直接指向目标的指针、相对偏移量或一个间接定位到目标的句柄。</li>
+<li>解析动作主要针对类或接口、字段、类方法、接口方法、方法类型等。对应常量池中的CONSTANT_Class_info、CONSTANT_Filedref_info、CONSTANT_Methodref_info等。</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>初始化<ul>
+<li>初始化阶段就是执行类构造器方法clinit()的过程。</li>
+<li>此方法不需要定义，是javac编译器自动收集类中的所有类变量的赋值动作和静态代码块中的语句合并而来。</li>
+<li>构造器方法中指令按语句在源文件中出现的顺序执行。</li>
+<li>clinit()不同于类的构造器。(构造器是虚拟机视角下的init())。</li>
+<li>若该类具有父类，JVM会保证子类的clinit()执行前，父类的clinit()已经执行完毕。</li>
+<li>虚拟机必须保证一个类的clinit()方法在多线程下被同步加锁。</li>
+</ul>
+</li>
+</ol>
+<h2 id="2-3-📑类加载器详解"><a href="#2-3-📑类加载器详解" class="headerlink" title="2.3 📑类加载器详解"></a>2.3 📑类加载器详解</h2><blockquote>
+<p>⏬ 类加载器的分类</p>
+</blockquote>
+<ul>
+<li>JVM支持两种类型的类加载器，分别为引导类加载器(BootStrap ClassLoader)和自定义类加载器(User-Defined ClassLoader)。</li>
+<li>从概念上来讲，自定义类加载器一般指的是程序中由开发人员自定义的一类类加载器，但是Java虚拟机规范却没有这么定义，而是将所有派生于抽象类ClassLoader的类加载器都划分为自定义类加载器。</li>
+<li>无论类加载器的类型如何划分，在程序中最常见的类加载器始终只有3个，如下所示</li>
+</ul>
+<div class="mermaid">graph TD
+A[...]
+B[...]
+C[User Defined Class Loader]
+D[User Defined Class Loader]
+E[User Defined Class Loader]
+F[User Defined Class Loader]
+G[System Class Loader]
+H[Extension Class Loader]
+I[Bootstrap Class Loader]
+A --&gt; C 
+C --&gt; E
+B --&gt; D
+D --&gt; F
+E --&gt; G
+F --&gt; G
+G --&gt; H
+H --&gt; I</div>
+
+
+
+<blockquote>
+<p>⚡️ 关于ClassLoader </p>
+</blockquote>
+<p>ClassLoader类，是一个抽象类，其后所有的类加载器都继承自ClassLoader。</p>
+<div class="mermaid">classDiagram
+ExtClassLoader --&gt; URLClassLoader
+AppClassLoader --&gt; URLClassLoader
+AppClassLoader : loadClass(String, booean)
+URLClassLoader --&gt; SecureClassLoader
+URLClassLoader : findClass(String)
+SecureClassLoader --&gt; abstract ClassLoader
+abstract ClassLoader : loadClass(String)
+abstract ClassLoader : resolveClass(Class&lt;?&gt;)
+abstract ClassLoader : findClass(String)
+abstract ClassLoader : defineClass(byte[], int, int)</div>
+
+
+<p>ClassLoader的常用方法</p>
+<table>
+<thead>
+<tr>
+<th align="center">方法</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">getParent()</td>
+<td align="center">返回该类加载器的超类加载器</td>
+</tr>
+<tr>
+<td align="center">loadClass(String name)</td>
+<td align="center">加载名称为name的类，返回结果为java.lang.Class类的实例</td>
+</tr>
+<tr>
+<td align="center">findClass(String name)</td>
+<td align="center">查找名称为name的类，返回结果为java.lang.Class类的实例</td>
+</tr>
+<tr>
+<td align="center">findLoadedClass(String name)</td>
+<td align="center">查找名称为name的已经被加载过的类，返回结果为java.lang.Class类的实例</td>
+</tr>
+<tr>
+<td align="center">defineClass(String name, byte[] b, int off, int len)</td>
+<td align="center">把字节数组b中的内容转换为一个Java类，返回结果为java.lang.Class类的实例</td>
+</tr>
+<tr>
+<td align="center">resloveClass(Class&lt;?&gt; c)</td>
+<td align="center">连接指定的一个Java类</td>
+</tr>
+</tbody></table>
+<p>获取ClassLoader的途径</p>
+<table>
+<thead>
+<tr>
+<th align="center">描述</th>
+<th align="center">方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">获取当前类的ClassLoader</td>
+<td align="center">clazz.getClassLoader()</td>
+</tr>
+<tr>
+<td align="center">获取当前线程上下文的ClassLoader</td>
+<td align="center">Thread.currentThread().getContextLoader()</td>
+</tr>
+<tr>
+<td align="center">获取系统的ClassLoader</td>
+<td align="center">ClassLoader.getSystemClassLoader()</td>
+</tr>
+<tr>
+<td align="center">获取调用者的ClassLoader</td>
+<td align="center">DriveManager.getCallerClassLoader()</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>🎀 虚拟机自带的加载器</p>
+</blockquote>
+<ul>
+<li>启动类加载器(Bootstrap ClassLoader)<ul>
+<li>C/C++语言编写，嵌套在JVM内部，无法获取</li>
+<li>它用来加载Java的核心库，用于提供JVM自身需要的类</li>
+<li>并不继承自java.lang.Classoader，没有父类加载器</li>
+<li>加载扩展类和应用程序类加载器，并指定为他们的父类加载器</li>
+<li><strong>出于安全考虑，BootStrap启动类加载器只加载包名为<u>java</u>、<u>javax</u>、<u>sun</u>等开头的类</strong></li>
+</ul>
+</li>
+<li>应用程序类加载器(Application ClassLoader)<ul>
+<li>Java语言编写，由sun.misc.Launcher$AppClassLoader实现</li>
+<li>派生于ClassLoader类</li>
+<li>父类加载器为扩展类加载器</li>
+<li>它负责加载环境变量classpath或系统属性java.class.path指定路径下的类库</li>
+<li>该类加载是程序中默认的类加载器，一般来说，Java应用的类都是由它来完成加载</li>
+<li>通过ClassLoader$getSystemClassLoader()方法可以获取到该类加载器</li>
+</ul>
+</li>
+<li>扩展类加载器(Extension ClassLoader)<ul>
+<li>Java语言编写，由sun.misc.Launcher$ExtClassLoader实现</li>
+<li>它负责加载%JAVA_HOME%\lib\ext目录中或者被java.ext.dirs系统变量所指定的路径中的所有类库</li>
+<li>开发者可以直接使用扩展类加载器</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>🎀 用户自定义类加载器</p>
+</blockquote>
+<p>应用场景：</p>
+<ul>
+<li>隔离加载类</li>
+<li>修改类加载的方式</li>
+<li>扩展加载源</li>
+<li>防止源码泄露</li>
+</ul>
+<p>实现步骤：</p>
+<ul>
+<li>开发人员可以通过继承抽象类java.lang.ClassLoader类的方式，实现自己的类加载器，以满足一些特殊的需求。</li>
+<li>在JDK1.2之前，在自定义类加载器时，总会去继承ClassLoader类并重写loadClass()方法，从而实现自定义的类加载器，但是在JDK1.2之后已不再建议用户去覆盖loadClass()方法，而是建议把自定义的类加载器逻辑写在findClass()方法中。</li>
+<li>在编写自定义类加载器时，如果没有太过于复杂的需求，可以直接继承URLClassLoader类，这样就可以避免自己去编写findClass()方法及其获取字节码流的方式，使自定义类加载器编写更加简洁。</li>
+</ul>
+<h2 id="2-5-💑双亲委派机制"><a href="#2-5-💑双亲委派机制" class="headerlink" title="2.5 💑双亲委派机制"></a>2.5 💑双亲委派机制</h2><blockquote>
+<p>🕵️ 工作原理</p>
+</blockquote>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/22607/%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%9C%BA%E5%88%B6.svg" class="" title="双亲委派机制"><br />
+
+<p><strong>责任链模式</strong></p>
+<ul>
+<li>如果一个类加载器收到了类加载请求，它并不会自己先去加载，而是把这个请求委托给父类的加载器去执行。</li>
+<li>如果父类加载器还存在其父类加载器，则进一步向上委托，依次递归，请求最终将到达顶层的启动类加载器。</li>
+<li>如果父类加载器可以完成类加载任务，就成功返回，倘若父类加载器无法完成此加载任务，子加载器才会尝试自己去加载。</li>
+</ul>
+<blockquote>
+<p>🌠 优势</p>
+</blockquote>
+<ul>
+<li>避免类的重复加载</li>
+<li>保护程序安全，防止核心AP被随意篡改</li>
+</ul>
+<blockquote>
+<p>📘 沙箱安全机制</p>
+</blockquote>
+<p>假如在java.lang包下自定义String类，程序会报错。</p>
+<p>因为在加载自定义String类的时候回率先使用引导类加载器加载，而引导类加载器在加载的过程中会先加载jdk自带的文件(rt.jar包中java/lang/String.class)，报错信息是找不到main方法，就是因为加载的是rt.jar中的String类。这样可以保证对Java核心源代码的保护。</p>
+<h2 id="2-6-🔰其他"><a href="#2-6-🔰其他" class="headerlink" title="2.6 🔰其他"></a>2.6 🔰其他</h2><blockquote>
+<p>⚓ 在JVM中表示两个class对象是否为同一个类存在的两个必要条件</p>
+</blockquote>
+<ul>
+<li>类的完整类名必须一致，包括包名</li>
+<li>加载这个类的ClassLoader必须相同</li>
+</ul>
+<p>换句话说，在JVM中，即使这两个类对象来源于同一个class文件，被同一个虚拟机所加载，但只要加载它们的ClassLoader实例对象不同，那么这两个类对象也是不相等的。</p>
+<blockquote>
+<p>⚓ 对类加载器的引用</p>
+</blockquote>
+<p>JVM必须知道一个类型是由启动加载器加载的还是由用户类加载器加载的。如果一个类型是由用户类加载器加载的，那么JVM会将这个类加载器的一个引用作为类型信息的一部分保存在方法区中。当解析一个类型到另一个类型的引用的时候，JVM需要保证这两个类型的类加载器是相同的。</p>
+<blockquote>
+<p>⚓ 类的主动使用和被动使用</p>
+</blockquote>
+<p>Java程序对类的使用方式分为：主动使用和被动使用</p>
+<p>主动使用，分为七种情况：</p>
+<ul>
+<li>创建类的实例</li>
+<li>访问某个类或接口的静态变量，或者对该静态变量赋值</li>
+<li>调用类的静态方法</li>
+<li>反射(比如：Class.forName(“top.parak”))</li>
+<li>初始化一个类的子类</li>
+<li>Java虚拟机启动时被标明为启动类的类</li>
+<li>JDK7开始提供的动态语言支持：java.lang.invoke.MethodHandle实例的解析结果<br>REF_getStatic、REF_putStatic、REF_invokeStatic句柄对应的类没有初始化，则初始化</li>
+</ul>
+<p>除了以上七种情况，其他使用Java类的方式都被看做是被动使用，都不会导致类的初始化</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.parak.top">Khighness</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.parak.top/posts/22607">https://www.parak.top/posts/22607</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 </a>许可协议。转载请注明来自<a href="https://www.parak.top">炒菜K殿下</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Java/">Java</a></div><div class="post_share"><div class="social-share" data-image="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-31.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/2398/"><img class="prev-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-32.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">JVM-3(运行时数据区)</div></div></a></div><div class="next-post pull-right"><a href="/posts/21157/"><img class="next-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-30.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">JVM-1(JVM概述)</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/15536/" title="Spring-事务原理"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-63.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-20</div><div class="title">Spring-事务原理</div></div></a></div><div><a href="/posts/54880/" title="Spring-aop原理"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-62.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-19</div><div class="title">Spring-aop原理</div></div></a></div><div><a href="/posts/408/" title="Spring-循环依赖"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-61.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-18</div><div class="title">Spring-循环依赖</div></div></a></div><div><a href="/posts/55590/" title="Spring-bean的生命周期"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-60.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-17</div><div class="title">Spring-bean的生命周期</div></div></a></div><div><a href="/posts/39013/" title="Spring-组件注册"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-59.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-16</div><div class="title">Spring-组件注册</div></div></a></div><div><a href="/posts/11567/" title="JVM-15(垃圾回收器)"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-44.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-06-01</div><div class="title">JVM-15(垃圾回收器)</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-%F0%9F%93%93%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%AD%90%E7%B3%BB%E7%BB%9F"><span class="toc-text">2.1 📓类加载子系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-%F0%9F%9A%80%E7%B1%BB%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B"><span class="toc-text">2.2 🚀类的加载过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-%F0%9F%93%91%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8%E8%AF%A6%E8%A7%A3"><span class="toc-text">2.3 📑类加载器详解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-5-%F0%9F%92%91%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%9C%BA%E5%88%B6"><span class="toc-text">2.5 💑双亲委派机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-6-%F0%9F%94%B0%E5%85%B6%E4%BB%96"><span class="toc-text">2.6 🔰其他</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background: gray"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By Khighness</div><div class="footer_custom_text"><a href="https://www.foreverblog.cn/" target="_blank" > <img src="https://img.foreverblog.cn/logo_en_default.png" alt="" style="width:auto;height:16px;"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'Py2eOHzSdrnxKPzKrOJaHJOq-9Nh9j0Va',
+      appKey: '9eQhwuCgyshpYKn4rtEhqt4R',
+      placeholder: '',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: true,
+      serverURLs: '',
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/Khighness/cdn/js/emotion.json',
+      emojiMaps: "",
+      enableQQ: true,
+      path: window.location.pathname,
+      requiredFields: ["nick, mail"],
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://unpkg.com/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="//code.tidio.co/ao1f4qdjllf8yowzz7v5brdaejt42uoi.js" async="async"></script><script>function onTidioChatApiReady() {
+  window.tidioChatApi.hide();
+  window.tidioChatApi.on("close", function() {
+    window.tidioChatApi.hide();
+  });
+}
+if (window.tidioChatApi) {
+  window.tidioChatApi.on("ready", onTidioChatApiReady);
+} else {
+  document.addEventListener("tidioChat-ready", onTidioChatApiReady);
+}
+
+var chatBtnFn = () => {
+  document.getElementById("chat_btn").addEventListener("click", function(){
+    window.tidioChatApi.show();
+    window.tidioChatApi.open();
+  });
+}
+chatBtnFn()
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>function history_calendar_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-history"><div class="card-content"><div class="item-headline"><i class="fas fa-clock fa-spin"></i><span>那年今日</span></div><div id="history-baidu" style="height: 100px;overflow: hidden"><div class="history_swiper-container" id="history-container" style="width: 100%;height: 100%"><div class="swiper-wrapper" id="history_container_wrapper" style="height:20px"></div></div></div></div>';
+                console.log('已挂载history_calendar')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            history_calendar_injector_config()
+        } </script><script data-pjax  src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script><script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/js/main.js"></script><!-- hexo injector body_end end --></body></html>

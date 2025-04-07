@@ -1,0 +1,821 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RAFT-NOTE | Khighness</title><meta name="keywords" content="Paper,Distributed-consensus"><meta name="author" content="Khighness"><meta name="copyright" content="Khighness"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="《云原生分布式存储基石 etcd深入解析》读书笔记，深入解读了Raft论文，并列举了集群的各种异常情况，最后附上Raft的性能优化。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RAFT-NOTE">
+<meta property="og:url" content="https://www.parak.top/posts/13171/index.html">
+<meta property="og:site_name" content="Khighness">
+<meta property="og:description" content="《云原生分布式存储基石 etcd深入解析》读书笔记，深入解读了Raft论文，并列举了集群的各种异常情况，最后附上Raft的性能优化。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-64.jpg">
+<meta property="article:published_time" content="2021-10-09T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-07-17T17:17:00.096Z">
+<meta property="article:author" content="Khighness">
+<meta property="article:tag" content="Paper">
+<meta property="article:tag" content="Distributed-consensus">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-64.jpg"><link rel="shortcut icon" href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/K.jpg"><link rel="canonical" href="https://www.parak.top/posts/13171/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//s4.cnzz.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?16576652";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script async="async" data-pjax="data-pjax" src="https://s4.cnzz.com/z_stat.php?id=1279324689&amp;web_id=1279324689"></script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Khighness","link":"链接: ","source":"来源: Khighness","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-07-18 01:17:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/background.css"><link rel="stylesheet" href="/css/iconfont/iconfont.css"><link rel="stylesheet" href="/css/mouse.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/css/main.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Khighness" type="application/atom+xml">
+</head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/Khighness.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">93</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">40</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-64.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Khighness</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">RAFT-NOTE</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-10-09T16:00:00.000Z" title="发表于 2021-10-10 00:00:00">2021-10-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-07-17T17:17:00.096Z" title="更新于 2023-07-18 01:17:00">2023-07-18</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Distributed-consensus/">Distributed-consensus</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">9.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>28分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="RAFT-NOTE"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="RAFT概述"><a href="#RAFT概述" class="headerlink" title="RAFT概述"></a>RAFT概述</h2><p>相比于Paxos，Raft主要使用两种方法来提高可理解性。</p>
+<h3 id="问题分解"><a href="#问题分解" class="headerlink" title="问题分解"></a>问题分解</h3><p>尽可能将问题分解为若干个可解决的、更容易理解的小问题——这是众所周知的简化问题的方法论。</p>
+<p>Raft算法把问题分解成了领导人选举（leader election）、日志复制（log replication）、安全性（safety）和成员关系变化（membership changes）这几个子问题。</p>
+<ul>
+<li><strong>领导人选举</strong>：在一个领导人结点发生故障之后必须重新给出一个新的领导人节点。</li>
+<li><strong>日志复制</strong>：领导人结点从客户端接收操作请求，然后将操作日志复制到集群中的其他服务器上，并且强制要求其他服务器的日志必须和自己的保持一致。</li>
+<li><strong>安全性</strong>：Raft关键的安全特性是状态机安全原则（Safety Machine Safety）——如果一个服务器已经将给定索引位置的日志条目应用到状态机上，则所有其他服务器不会再该索引位置应用不同的条目。</li>
+<li><strong>成员关系变化</strong>：配置发生变化的时候，集群能够继续工作。</li>
+</ul>
+<h3 id="状态简化"><a href="#状态简化" class="headerlink" title="状态简化"></a>状态简化</h3><p>Raft算法通过减少需要考虑的状态数量来简化状态空间。这将使得整个系统更加一致并且能够尽可能地消除不确定性。需要特别说明的是，日志条目之间不允许出现空洞，并且还要限制日志出现不一致的可能性。尽管在大多数情况下，Raft都在试图消除不确定性以减少状态空间。但在一种场景下（选举），Raft会用随机方法来简化选举过程中的状态空间。</p>
+<p>Raft算法与现有的一些Paxos变种（主要是Oki和Liskov的Viewstamped Replication）存在一些相似的地方，但是Raft还有几点重要的创新：</p>
+<ul>
+<li><strong>强领导人</strong>：Raft使用一种比其他算法更强的领导形式。例如，日志条目只从领导人发向其他服务器。这样就简化了对日志复制的管理，提高了Raft的可理解性。</li>
+<li><strong>领导人选举</strong>：Raft使用随机定时器来选举领导人。这种方式仅仅是在所有算法都需要实现的心跳机制上增加了一点变化，就使得冲突解决更加简单和快速。</li>
+<li><strong>成员变化</strong>：Raft在调整集群成员关系时使用了一种新的一致性（joint consensus，联合一致性）方法。使用这种方法，使得集群配置在发生变化时，集群依旧能够正常工作。</li>
+</ul>
+<h2 id="算法实现"><a href="#算法实现" class="headerlink" title="算法实现"></a>算法实现</h2><h3 id="节点角色"><a href="#节点角色" class="headerlink" title="节点角色"></a>节点角色</h3><p>一般情况下，分布式系统中存在如下两种节点关系模型：</p>
+<ul>
+<li>对称：所有的节点都是平等的，不存在主节点。客户端可以与任意节点进行交互。</li>
+<li>非对称：基于选主模型，只有主节点拥有决策权。任意时刻有且只有一个主节点，客户端只与主节点进行交互。</li>
+</ul>
+<p>基于简化操作和效率等因素考虑，Raft算法采用的是非对称节点关系模型。</p>
+<p>在一个由Raft协议组织的集群中，一共包含了如下3类角色：</p>
+<ul>
+<li>Leader（领导人）</li>
+<li>Candidate（候选人）</li>
+<li>Follower（群众）</li>
+</ul>
+<h3 id="时间同步"><a href="#时间同步" class="headerlink" title="时间同步"></a>时间同步</h3><p>Raft算法将时间划分为任意不同长度的任期（Term），任期是单调递增的，用连续的数组（1，2，3······）表示。在Raft的世界里，每一个任期的开始都是一次领导人的选举。</p>
+<p>如果一个领导人赢得了选举，那么它就会在该任期的剩余时间内担任领导人。在某些情况下，选票会被瓜分，导致没有哪位候选人能够得到超过半数的选票，这样本次任期将以没有领导人而结束。那么忙，系统就会自动进入下一个任期，开始一次新的选举。Raft算法保证在给定的一个任期内最多只有一个领导人。某些Term会由于选举失败，存在没有领导人的情况。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图1. Raft算法任期示意图</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/time-synchronization.png" class="" title="time-synchronization">
+
+<br />
+
+<p>任期在Raft中起着逻辑时钟的作用，同时也可用于在Raft节点中检测过期信息——比如过期的领导人。</p>
+<p>每个Raft节点都在本地维护一个当前任期值，触发这个数字变化（增加）主要有两个场景：</p>
+<ul>
+<li>开始选举</li>
+<li>与其他节点交换信息</li>
+</ul>
+<p>当节点之间开始通信时，会互相交换当前的任期号：</p>
+<ul>
+<li><p>如果一个节点（包括领导人）的当前任期号比其他节点的任期号小，则将自己本地的任期号自觉地更新为较大的任期号。</p>
+</li>
+<li><p>如果一个候选人或者领导人意识到它的任期号过时了（比别人的小），那么它会立刻切换回群众状态。</p>
+</li>
+<li><p>如果一个节点收到的请求所携带的任期号是过时的，那么该节点就会拒绝响应本次请求。</p>
+</li>
+</ul>
+<p>需要注意的是，由于分布式系统节点之间无法做到在任意时刻完全同步，因此不同的Raft节点可能会在不同的时刻感知到任期的切换。甚至在出现网络分区或节点异常的情况下，某个节点可能会感知不到一次选举或者一个完整的任期。</p>
+<h3 id="领导人选举"><a href="#领导人选举" class="headerlink" title="领导人选举"></a>领导人选举</h3><p>Raft通过选举一个权利至高无上的领导人，并采取赋予他管理复制日志重任的方式来维护节点间复制日志的一致性。领导人从客户端接收日志条目，再把日志条目复制到其他服务器上，并且在保证安全性的前提下，告诉其他服务器将日志条目应用到它们的状态机中。强领导人的存在大大简化了复制日志的管理。</p>
+<p>例如，领导人可以决定新的日志条目需要放在日志文件的什么位置，而不需要和其他服务器商议，并且数据都是单向地从领导人流向其他服务器。当然，在这种方式下，领导人自身的日志正确性显得尤为重要，下文会证明日志的正确性。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图2. Raft集群三类角色切换示意图</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/role-switch.png" class="" title="role-switch">
+
+<br />
+
+<p>在Raft的选举中，有两个概念非常重要：心跳和选举定时器。每个Raft结点都有一个选举定时器，所有的Raft节点最开始以Follower角色运行时，都会启动这个选举定时器。不过，每个结点的选举定时器市场均不相等。</p>
+<p>Leader在任期内必须顶起向集群内的其他节点广播心跳包，昭告自己的存在。Follower每次收到心跳包后就会主动将自己的选举定时器清零重置（reset）。因此如果Follower选举定时器超时，则意味着在Raft规定的一个选举超时时间周期内，Leader的心跳包并没有发给Follower（或者已经发送了但在网络传输过程中发生了延迟或被丢弃了），于是Follower就假定Leader已经不存在或者发生了故障，于是会发生一次新的选举。</p>
+<p>对此，我们都可以形象地理解为每个Raft的Follower都有一颗不安分的“野心”，只是碍于Leader的心跳广播“号令”不敢“造反”。而Follower从最后一次接收到Leader的心跳包算起，最长的“蛰伏”时间就是Raft协议为每个节点规定的选举超时时间，超过这个时间，大家就都“蠢蠢欲动”了。</p>
+<p>因此，要求Leader广播心跳的周期必须要短于选举定时器的超时时间，否则会频繁地发生选举，切换Leader。</p>
+<p>如果一个Follower决定开始参加选举，那么它会执行如下步骤：</p>
+<ol>
+<li>将自己本地维护的当前任期号（current_term_id）加1。</li>
+<li>将自己的状态切换到候选人（Candidate），并为自己投票。也就是说每个候选人的第一张选票来自于他自己。</li>
+<li>向其所在集群中的其他节点发送 RequestVote RPC，要求它们投票给自己。</li>
+</ol>
+<p>一个候选人有三种状态迁移的可能性：</p>
+<ol>
+<li>得到大多数节点的选票（包括自己），成为Leader。</li>
+<li>发现其他节点赢得了选举，主动切换回Follower。</li>
+<li>过了一段时间后，发现没有人赢得选举，重新发起一次选举。</li>
+</ol>
+<p>第一种场景【先到先得】：一个候选人如果在一个任期内收到了集群中大多数Follower的投票，就算赢得了选举。在一个任期内，一个Raft结点最多只能为一个候选人投票，按照先到先得的原则，投给最早来拉选票的候选人。选举安全性原则使得在一个任期内最多有一个候选人能够赢得选举。一旦某个候选人赢得了选举，它就会向其他节点发送心跳信息来建立自己的领导地位。</p>
+<p>第二种场景【自动放弃】：当一个候选人在等待其他人的选票时，它有可能会收到来自其他节点的，声称自己是领导人的心跳包。此时，这个候选人会将信将疑地检查包含这位领导人RPC中的任期号：如果大于或等于自己本地维护的当前任期，则承认该领导人合法，并且主动将自己的状态切换回Follower；反之，候选人则认为该领导人不合法，拒绝此次RPC，并且返回当前较新的那个任期号，以便让领导人意识到自己的任期号已经过时，该节点继续保持候选人状态不变。</p>
+<p>第三种场景【选票瓜分】：一个候选人既没有赢得选举也没有输掉选举。如果多个Follower在同一时刻都成了候选人，那么选票可能会被多个候选人平分，这就使得没有哪个候选人能够获得超过半数的选票。当这种情形发生时，显然不能一直这样“僵持下去”，于是Raft的每一个候选人又都设置了超时时间内（类似于选举超时时间，区别是选举超时时间是针对Follower的），发生超时后，每个候选人自增任期号（Term++）并且发起新一轮的拉选票活动。然后，如果没有其他手段来分配选票的话，选票均分的情况可能会无限循环下去。为了避免发生这种问题，Raft采用了一种非常简单的方法——随机重试。例如，设置一个区间（150~300ms），超时时间将从这个区间内随机选择。错开发起竞选的时间窗口，可以使得在大多数情况下只有一个节点会率先超时，该节点会在其他节点超时之前赢得选举，并且向其他节点发送心跳信息。要知道，在每个选票打平时都会采用这种随机的方式，因此连续发生选票被均匀的概率非常小。</p>
+<blockquote>
+<p>据Raft算法的作者回忆，最开始时他们计划使用一种排名系统：为每一个候选人分配一个独一无二的排名，用于在候选人竞争时候根据排名的高低选择领导人。如果发现一个候选人的排名比另一个候选人的排名高，排名较低的就会切换回Follower的状态，这样排名搞的候选人就会轻而易举地赢得选举。</p>
+<p>但是他们马上就发现这种方法在可用性方面存在一些问题——低排名的节点在高排名的节点发生故障后，需要等待超时才能再次成为候选人，但是如果进行得太快，就有可能中断领导人选举的过程。</p>
+<p>在对算法进行了多次调整之后，最终他们认为随机重试的方法更加明确。</p>
+</blockquote>
+<p>候选人“拉票”过程使用Raft算法预定义的RPC——RequestVote RPC就能描述。RequestVote RPC的发起/调用方是Candidate，接收方是集群内所有的其他节点（包括Leader、Follower和Candidate）。</p>
+<p>RequestVote RPC有4个参数，2个返回值。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>表1. RequestVote RPC参数列表</font>
+</center>
+
+<table>
+<thead>
+<tr>
+<th align="left">参数</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">term</td>
+<td align="left">候选人</td>
+</tr>
+<tr>
+<td align="left">candidateId</td>
+<td align="left">请求投票的候选人id</td>
+</tr>
+<tr>
+<td align="left">lastLogIndex</td>
+<td align="left">候选人最新日志条目的索引值（槽位）</td>
+</tr>
+<tr>
+<td align="left">lastLogTerm</td>
+<td align="left">候选人最新日志条目对应的任期号</td>
+</tr>
+</tbody></table>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>表2. RequestVote RPC返回值列表</font>
+</center>
+
+<table>
+<thead>
+<tr>
+<th align="left">返回值</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">term</td>
+<td align="left">当前任期号，用于候选人更新自己本地的term值</td>
+</tr>
+<tr>
+<td align="left">voteGranted</td>
+<td align="left">如果候选人得到了这张选票，则为true，否则为false</td>
+</tr>
+</tbody></table>
+<p>RPC接收方需要实现的逻辑具体如下：</p>
+<ol>
+<li>如果term &lt; currentTerm，即RPC的第一个参数term的值小于接收方本地维护的term（currentTerm）值，则返回 (currentTerm, false)，以提醒调用方其term过时了，并且明确地告诉这位候选人这张选票不会投给他；否则执行步骤2。</li>
+<li>如果之前没把选票投给任何人（包括自己）或者已经把选票投给当前候选人了，并且候选人的日志和自己的日志一样新，则返回 (term, true)，表示在这个任期，选票都投给这位候选人。如果之前已经把选票投给其他人，那么很遗憾，这张选票还是不能投给他，这时就会返回 (term, false)。</li>
+</ol>
+<h3 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h3><p>一旦某个领导人赢得了选举，那么它就会开始接收客户端的请求。每一个客户端请求都将被解析成一条需要复制状态机执行的指令。领导人把这条指令作为一条心的日志加入它的日志文件中，然后并行地向其他Raft节点发起AppendEntries RPC，要求其他节点复制这个日志条目。当这个日志条目被“安全”地复制之后，Leader会将这条日志应用到它的状态机中，并且向客户端返回执行结果。如果Follower发生错误，运行缓慢没有及时响应AppendEntries RPC，或者发生了网络丢包的问题，那么领导人会无限地重试AppendEntries RPC（甚至在它响应了客户端之后），直到所有的Follower最终存储了和Leader一样的日志条目。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图3. RAFT协议追加日志示意图</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/log-composition.png" class="" title="log-composition">
+
+<br />
+
+<p>如图3所示，日志由有序编号的日志条目组成。每一个日志条目一般均包含三个属性：整数索引（log index）、任期号（term）和指令（command）。每个条目所包含的整数索引即该条目在日志文件中的槽位。term是指其被领导人创建时所在的任期号，对应到图中就是每个方块的数字，用于检测在不同的服务器上日志不一致性问题。指令即用于被状态机执行的外部命令。如果某个日志条目能够被状态机安全执行，就认为是可以被提交（commited）了。</p>
+<p>领导人决定什么时候将日志条目应用到状态机是安全的，即可被提交的。Raft算法保证可被提交的日志条目是持久化的，并且最终是会所有状态机执行的。一旦领导人创建的条目已经被复制到半数以上的节点上了，那么这个条目就称为可被提交的。例如，图中的7号提阿偶在其中3个结点上均有复制，所以7号条目是可被提交的；但条目8只在其中2个节点上有复制，因此8号条目是不可被提交的。</p>
+<p>领导人日志中只有commitIndex之前的日志项目可以被提交，这种提交方式是安全的。领导人跟踪记录他所知道的被提交日志条目的最大索引值，并且这个索引值会包含在他向其他节点发送的AppendEntries RPC中，目的就是让其他节点知道该索引值对应的日志条目已经被提交。由于领导人广播的心跳包就是一个内容为空的AppendEntries RPC，因此其他节点也能通过领导人的心跳包获悉某个日志条目的提交情况。一旦Follower得知某个日志条目已经被提交，那么它会将该日志应用到本地的状态机（按照日志顺序）。</p>
+<p>Raft算法设计了以下日志机制来保证不同节点上日志的一致性：</p>
+<ol>
+<li>如果在不同的日志中两个条目有着相同的索引和任期号，则它们所存储的命令是相同的。</li>
+<li>如果在不同的日志中两个条目有着相同的索引和任期号，则它们之前的所有条目都是完全一样的。</li>
+</ol>
+<p>第一条特性的满足条件在于，领导人在一个任期里在给定的一个日志索引位置最多创建一条日志条目，同时该条目在日志文件中的槽位永远也不会改变。</p>
+<p>第二条特性的满足条件在于，AppendEntries RPC有一个简单的一致性检查。领导人在发送一个AppendEntries RPC消息试图向其他节点追加新的日志条目时，会把这些新日志条目之前一个槽位的日志条目的任期号和索引位置包含在消息体中。如果Follower在它的日志文件中没有找到相同的任期号和索引的日志，它就会拒绝该AppendEntries RPC，即拒绝在自己的状态机中追加新日志条目。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图4. 新Leader产生时一个集群可能的一个状态图</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/cluster-status.png" class="" title="cluster-status">
+
+<br />
+
+<p>当一个新的Leader被选举出来时，它的日志与其他的Follower可能是不一样的。这是就需要一个机制来保证日志是一致的。产生一个新Leader时，集群状态可能如上。</p>
+<p>如图4所示的例子中，一个格子代表一个日志条目，格子中的数字是它对应的任期号。假设最上面的那个是领导人，a~f所代表的场景分别如下：</p>
+<ul>
+<li>a和b表示Follower丢失一些日志条目的场景。</li>
+<li>c和d表示Follower可能多出来一些未提交的条目的场景。</li>
+<li>e和f表示上述两种情况都有的场景。</li>
+</ul>
+<p>丢失的或者多出来的条目可能会持续多个任期。举个例子，场景f会在如下情况下发生：如果一台服务器在任期2时是领导人，并且其向他自己的日志文件中追加了一些日志条目，然后在将这些日志条目提交之前系统出现了故障。但是他很快又重启了，选举成功继续成功任期3的领导人，而且又向他自己的日志文件中追加了一些日志条目。但是不幸的是，在任期2和任期3中创建的日志条目在被提交之前又出现了故障，并且在后面几个任期内也一直处于故障状态。</p>
+<p>一般情况下，Leader和Follower的日志都是保持一致的，因此AppendEntries RPC的一致性检查通常不会失败。然后，如果领导人节点在故障之前没有向其他节点完全复制日志文件中的所有复制条目，则会导致日志不一致的问题。在Raft算法中，Leader通过强制Follower复制它的日志类处理日志不一致的问题。这就意味着，Follower上与Leader的冲突日志会被领导者的日志强制覆写。</p>
+<p>为了让Follower的日志同自己的保持一致，Leader需要找到第一个Follower与它的日志条目不一致的位置，然后让Follower连续删除该位置之后（包括该位置）所有的日志条目，并且将自己在该位置（包括该位置）之后的日志条目发送给Follower。</p>
+<p>那么，Leader是如何精准地找到每个Follower与其日志条目不一致的那么槽位的呢？这些操作都会在AppendEntries RPC进行一致性检查时完成。Leader为每一个Follower维护了一个nextIndex，它表示领导人将要发送给该群众的下一条日志条目的索引。当一个Leader赢得选举时，它会假设每个Follower上的日志都与自己的保持一致，于是先将nextIndex初始化为它最新的日志条目索引树+1。在图4所示的例子中，由于Leader最新的日志条目index为10，所以nextIndex的初始值是11。</p>
+<p>当Leader向Follower发送AppendEntries RPC时，它携带了 (term_id, nextIndex - 1) 二元组信息，term_id即nextIndex - 1这个槽位的日志条目的term。Follower接收到AppendEntries RPC消息后，会进行一致性检查，即搜索自己的日志文件中是否存在这样的日志条目，如果不存在，就向Leader返回AppendEntries RPC失败。如果返回失败信息，就意味着Follower发现自己的日志与领导人的不一致。在失败之后，领导人会将nextIndex递减（nextIndex–），然后重试AppendEntries RPC，直到AppendEntries RPC返回成功为止。这才表明在nextIndex位置的日志条目中领导人与群众的保持一致。这时，Follower上nextIndex位置之前的日志条目将全部保留，在此之后（与Leader有冲突）的日志条目将被Follower全部删除，并且从该位置起追加Leader上在nextIndex位置之后的所有日志条目。因此，一旦AppendEntries RPC返回成功，Leader和Follower的日志就可以保持一致了。</p>
+<p>以上即Raft日志的一致性检查的全过程，下面将以图4的Leader和b节点，举例说明日志一致性检查Leader和Follower之间的交互过程：</p>
+<ol>
+<li>Leader的nextIndex的初始值为11，Leader向b发送AppendEntries RPC(6, 10)。b检查自己的日志文件的10号位置没有找到term为6的日志记录，于是b向leader返回了一个拒绝消息。</li>
+<li>Leader将nextIndex减1，变成10，继续向b发送AppendEntries RPC(6, 9)。b检查自己的日志文件的9号位置没有找到term为6的日志记录，于是b再次向Leader返回了一个拒绝消息。</li>
+<li>Leader将nextIndex减1，变成9，继续向b发送AppendEntries RPC(6, 8)。b检查自己的日志文件的8号位置没有找到term为6的日志记录，于是b再次向Leader返回了一个拒绝消息。</li>
+<li>Leader将nextIndex减1，变成8，继续向b发送AppendEntries RPC(5, 7)。b检查自己的日志文件的7号位置没有找到term为5的日志记录，于是b再次向Leader返回了一个拒绝消息。</li>
+<li>Leader将nextIndex减1，变成6，继续向b发送AppendEntries RPC(5, 6)。b检查自己的日志文件的6号位置没有找到term为5的日志记录，于是b再次向Leader返回了一个拒绝消息。</li>
+<li>Leader将nextIndex减1，变成5，继续向b发送AppendEntries RPC(4, 5)。b检查自己的日志文件的5号位置没有找到term为4的日志记录，于是b再次向Leader返回了一个拒绝消息。</li>
+<li>Leader将nextIndex减1，变成4，继续向b发送AppendEntries RPC(4, 4)。b检查自己的日志文件的4号位置，找到了term为4的日志记录，于是接受了Leader的AppendEntries RPC请求，并架构自己的日志文件中从5号位置开始的日志记录全部删除。随后，Leader就从5号位置开始把余下的所有日志条目一次性推给b（5~10）。</li>
+</ol>
+<p>如果需要的话，在 Raft算法的实现上还可以优化AppendEntries RPC失败的次数。例如，当Follower拒绝了一个AppendEntries RPC时，Follower可以在自己本地的日志文件中找到该冲突日志项对应的任期号内所有日志条目索引（index）值最小的那个，然后反馈给Leader。于是，领导人就可以跳跃式递减nextIndex，跨过那个任期内所有的冲突条目。通过这种方式，一个冲突的任期只需要一次AppendEntries RPC检查，而无须为每个冲突条目都做一次AppendEntries RPC检查。</p>
+<p>Raft算法的日志复制机制，使得Leader和Follower只需要调用和响应AppendEntries RPC即可让集群内节点的各复制状态机的日志逐渐地趋于一致，而无须再采取额外的措施。一个领导人从来不会删除自己的日志（包括前任领导人创建的日志），也不会被别人覆盖日志。</p>
+<p>Raft算法的日志复制机制表明：只要集群中的大部分节点是正常的，那么Raft算法就能接收客户端复制日志的请求，并将其复制到各节点上且应用（Apply）带各节点复制状态机上。通常情况下，一次AppendEntries RPC就能完成一条心的日志条目在集群内的大多数节点上的复制。而且Raft只要求日志条目在大多数节点上完成复制就算提交成功，因此速度较慢的Follower并不会影响整体的日志复制性能。</p>
+<p>一次正常的Raft日志的复制流程：</p>
+<ol>
+<li>客户端向Leader发送写请求。</li>
+<li>Leader将写请求解析成操作指令追加到哦本地日志文件中。</li>
+<li>Leader为每个Follower广播哦AppendEntries RPC。</li>
+<li>Follower通过一致性检查，选择从哪个位置开始追加Leader的日志条目。</li>
+<li>一旦日志项提交成功，Leader就将该日志条目对应的指令应用到本地状态机，并向客户端返回操作结果。</li>
+<li>Leader后续通过AppendEntries RPC将已经成功（在大多数节点上）提交的日志项告知Follower。</li>
+<li>Follower收到提交的日志项之后，将其应用到本地状态机。</li>
+</ol>
+<p>从上面流程可以看出，针对Raft日志条目有两个操作，提交（commit）和应用（apply），应用必须发生在提交之后，即某个日志条目被提交之后才能被应用到本地状态机上。</p>
+<p>AppendEntries RPC的调用方式Leader，接收方是Follower。AppendEntries RPC除了用于复制文件之外，还可以广播Leader的心跳包。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>表3. AppendEntries RPC参数列表</font>
+</center>
+
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>term</td>
+<td>领导人的任期号</td>
+</tr>
+<tr>
+<td>leaderId</td>
+<td>领导人的ID，为了其他Raft节点能够重定向客户端请求</td>
+</tr>
+<tr>
+<td>prevLogIndex</td>
+<td>本次AppendEntries RPC新增日志的前一个位置日志的索引值</td>
+</tr>
+<tr>
+<td>prevLogTerm</td>
+<td>本次AppendEntries RPC新增日志的前一个位置日志的任期号</td>
+</tr>
+<tr>
+<td>entries[]</td>
+<td>将要追加到Follower上的日志条目。发生心跳包时为空，有时会为了效率高而向多个节点并发发送</td>
+</tr>
+<tr>
+<td>leaderCommit</td>
+<td>领导人会为每个Follower都维护一个leaderCommit，表示领导人认为Follower已经提交的日志条目索引值。</td>
+</tr>
+</tbody></table>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>表4. AppendEntries RPC返回值列表</font>
+</center>
+
+<table>
+<thead>
+<tr>
+<th>返回值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>term</td>
+<td>当前的任期号，即AppendEntries RPC参数中term（领导人的）与Follower本地维护的当前任期号的较大值。用于领导人更新自己的任期号。一旦领导人发现当前任期号比自己的要大，就表明自己是一个“过时”的领导人，便停止发送AppendEntries RPC，主动切换回Follower。</td>
+</tr>
+<tr>
+<td>success</td>
+<td>如果其他服务器包含能够匹配prevLogIndex和prevLogTerm的日志，则为真</td>
+</tr>
+</tbody></table>
+<p>RPC 接收者需要实现如下操作步骤：</p>
+<ol>
+<li>如果term &lt; currentTerm，即领导人的任期号小于Follower本地维护的当前任期号，则返回 (currentTerm, false)，否则继续步骤2。</li>
+<li>如果Follower在prevLogIndex位置的日志的任期号与prevLogTerm不匹配，则返回 (term, false)，否则继续步骤3。</li>
+<li>Follower进行日志一致性检查。</li>
+<li>添加任何在已有的日志中不存在的条目，删除多余的条目。</li>
+<li>如果leaderCommit &gt; commiIndex，则将commitIndex （Follower自己维护的本地已提交的日志条目索引值）更新为min{leaderCommit, Follower本地最新日志条目索引}。即信任Leader的数据，乐观地将本地已提交日志的索引值跃进领导人为该Follower跟踪记录的那个值（除非leaderCommit比本地最新的日志条目索引值还要大）。这种场景通常发生在Follower刚从故障中恢复过来的场景。</li>
+</ol>
+<h3 id="安全性Q-amp-A"><a href="#安全性Q-amp-A" class="headerlink" title="安全性Q&amp;A"></a>安全性Q&amp;A</h3><p>前面讨论了Raft算法的是如何进行领导人选举和日志复制的。然后，到目前为止这个机制还不能保证每一个状态机都能按照相同的顺序执行同样的指令。例如，当领导人正在复制日志条目时一个Follower发生了故障，且故障发生之前没有复制领导人的日志，之后该Follower重启并且当选为领导人，那么它在产生了一些新的日志条目后，会用自己的日志覆盖掉其他节点的日志，这就导致不同的状态机可能执行不同的指令序列。</p>
+<p>下面将介绍如何在领导人选举部分加入一个限制规则来保证——任何的领导人都拥有之前任期的全部日志条目。有了这一限制，就不会上述例子所描述的情形了。</p>
+<p>Q: 怎样才能具有称为领导人的资格？</p>
+<p>A: 在所有以领导人选举为基础的一致性算法中，领导人最终必须要存储全部已经提交的日志条目。在一些一致性算法中，例如，Viewstamped Replication中，即时一开始没有包含全部已提交的条目也可以当选为领导人。这些算法都包含一些另外的机制来保证找到丢失的条目并将它们传输给新的领导人，这个过程要么在选举过程中完成，要么在选举之后立即开始。毫无疑问的是，这种方式显著增加了算法的复杂性。</p>
+<p>Raft算法使用的是一种更简单的方式来保证新当选的领导人，之前任期已提交的所有日志条目都已经出现在了上面，而不需要将这些条目传送给新领导人。这种方式隐含了以下两点内容：</p>
+<ul>
+<li>没有包含所有已提交日志条目的节点成为不了领导人。</li>
+<li>日志条目只有一个流向：从Leader流向Follower。领导人永远不会覆盖已经存在的日志条目。</li>
+</ul>
+<p>Raft算法使用投票的方式来阻止那些没有包含所有已提交日志条目的节点赢得选举。一个候选人为了赢得选举必须要与集群中的大多数节点进行通信，这就意味着每一条已经提交的日志条目都会出现在至少其中一个与之通信的节点上。如果候选人的日志比集群内的大多数节点上的日志更加新（或至少一样新），那么它一定包含所有已经提交的日志条目。因此，RequestVote RPC的接收方有一个检查：如果他自己的日志比RPC调用方（候选人）的日志更加新，就会拒绝候选人的投票请求。</p>
+<p>那么，如何比较两份日志哪个更加新呢？比较的依据是日志文件中最后一个条目的索引和任期号：如果两个日志条目的任期号不同，则任期号大的更加新；如果任期号相同，则索引值更大（即日志文件条目更多）的日志更加新。</p>
+<p>Q: 如何判断日志已经提交？</p>
+<p>A: 领导人当前任期的某条日志条目只要存储在大多数节点上，就认为该日志记录已经被提交（commited）了。如果领导人在提交某个日志条目之前崩溃了，那么未来后继的领导人会让其他节点继续复制这个日志条目。</p>
+<p>然后，一个领导人不能因为由之前领导人创建（即之前任期）的某条日志存储在大多数节点上了，就笃定该日志条目已经被提交了。图4中的时序a~d就展示了这种情况，一条已经被存储到大多数节点上的日志条目，也依然有可能被未来的领导人覆盖掉。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图5. Raft算法某一时刻日志状态图</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/log-status.png" class="" title="log-status">
+
+<br />
+
+<p>时刻a，S1是任期2的领导人并且向部分节点（S1和S2）复制了2号位置的日志条目，然后宕机。</p>
+<p>时刻b，S5获得了S3、S4（S5的日志与S3和S4的一样新，最新的日志的任期号都是1）和自己的选票赢得了选举，成了3号任期的领导人，并且在2号位置上写入了一条任期号为3日志条目。在新日志复制到其他节点之前，S5宕机了。</p>
+<p>时刻c，S1重启，并且通过S2、S3、S4和自己的选票赢得了选举，成了4号任期的领导人，并且继续向S3复制2号位置的日志。此时，任期2的日志条目已经在大多数节点上完成了复制。</p>
+<p>时刻d，S1发生故障，S5通过S2、S3、S4的选票再次成为领导人（因为S5最后一条日志的任期号是3，比S2、S3、说中任意一个节点上的日志都更加新），任期号为5。然后S5用自己的本地日志覆写了其他节点上的日志。</p>
+<p>这个例子说明，即时日志条目被半数以上的节点写盘（复制）了，也并不代表它已经被提交（commited）到Raft集群了——因为一旦某条日志被提交，那么它将永远没法被删除或修改。这个例子同时也说明了，领导人无法单纯地依靠之前任期的日志条目信息判断它的提交状态。</p>
+<p>因此，针对以上场景，Raft算法对日志提交条件增加了一个额外的限制，要求Leader在当前任期至少有一条日志被提交，即被超过半数的节点写盘。</p>
+<p>正如图5时刻e描述的那样，S1作为Leader，在崩溃之前，将3号位置的日志（任期号为4）在大多数节点上复制了一条日志条目（条目3，任期4），那么即使这时S1宕机了，S5也不可能赢得选举——因为S2和S3的最新日志条目的任期号为4，比S5的要大，S5无法获得超过半数的选票，S5无法赢得选举，这就意味着2号位置的日志条目不会被覆写。</p>
+<p>将上面的描述进行归纳，可以总结为以下几点：</p>
+<ul>
+<li>只要一个日志条目被存在了大多数的服务器上，领导人就知道当前任期可以提交该条目了。</li>
+<li>如果领导人在提交日志之前就崩溃了，之后的领导人会试着继续完成对日志的复制。但是，新领导人无法断定存储在大多数服务器上的日志条目一定在之前的任期中被提交了（即时日志保存在大多数的服务器上，也有可能没来得及提交）。</li>
+</ul>
+<div class="note icon simple"><i class="note-icon fab fa-korvue"></i><p><strong>关于状态机安全性的三段论证明</strong></p>
+<p>定义：A为上个任期最后一条已提交日志，B为当前任期的Leader</p>
+<ol>
+<li><strong>因为</strong> A必然同步到了集群中的半数以上节点</li>
+<li><strong>又因为</strong> B只有获得集群中半数以上节点的选票才能成为Leader</li>
+<li><strong>所以</strong> B的选民中必然存在拥有A日志的节点</li>
+<li><strong>又因为</strong> 选举限制，B成为Leader的前提是比给它投票的所有选民都要新</li>
+<li><strong>所以</strong> B的日志中必然要包含A</li>
+<li><strong>又因为</strong> 日志完全匹配规则，如果A被B包含，那么比A小的所以日志都被B包含</li>
+<li><strong>因为</strong> lastApplied &lt;= commitIndex</li>
+<li><strong>又因为</strong> Raft保证已提交日志在所有集群节点上的顺序一致</li>
+<li><strong>所以</strong> 应用日志必然在所有节点上顺序一致</li>
+<li><strong>因为</strong> 状态机只能按序执行应用日志部分</li>
+<li><strong>得证</strong> 状态机在整个集群所有节点上必然最终一致</li>
+</ol>
+</div>
+
+
+
+<h2 id="可用性与时序"><a href="#可用性与时序" class="headerlink" title="可用性与时序"></a>可用性与时序</h2><p>我们对分布式一致性算法的要求之一就是不依赖于时序（timing）——系统不能仅仅因为某些事件发生得比预想的快一些或慢一些就产生错误。然而，可用性（系统及响应客户端的请求）不可避免地要依赖时序。从上面的描述中可以看出，没有一个稳定的领导人，Raft算法将无法工作（至少没法接受客户端的写请求）。因此，如果消息交换发生在服务器崩溃时，则需要花费更多的时间，而候选人不会等待太长的时间来赢得选举。</p>
+<p>领导人选取是Raft算法中对时序要求最多的地方。只有当系统环境满足以下时序要求时，Raft算法才能选举并且保持一个稳定的领导人存在：</p>
+<center>
+    <font face="Kristen ITC" color="#555555" size=3>broadcastTime << electionTimeout < MTBF</font><br>
+</center>
+
+<p>在以上不等式中，各个时间含义如下：</p>
+<ul>
+<li>broadcastTime： 一个节点向集群中其他节点发送RPC，并且收到它们响应的平均时间。</li>
+<li>electionTimeout：选举超时时间。</li>
+<li>MTBF：单个节点发生故障的平均时间间隔。</li>
+</ul>
+<p>为了使领导人能够持续发送心跳包来阻止下面的Follower发起选举，broadcastTime应该比electionTimeout小一个数量级。根据已经给出的随机化选举超时时间方法，这个不等式也显著降低了选票瓜分的概率。为了使得系统稳定运行，election也应该比MTBF小几个数量级。当领导人出现故障且在新的领导人选举出来之前，系统对外将不可用，这个时长大约为electionTimeout。</p>
+<p>broadcastTime和MTBF与系统环境息息相关，但是我们可以根据实际情况配置electionTimeout的值。一次Raft算法的RPC的完成需要接收方将信息持久化到存储中去。所以广播时间是网络传输时延与存储写入时延的总和，一般在几毫秒到几十毫秒之间。因此，通常将electionTimeout设置在10ms到500ms之间。大多数的服务器的MTBF都在几个月甚至更长的时间里，因此很容易满足这个时序要求。</p>
+<h2 id="异常情况"><a href="#异常情况" class="headerlink" title="异常情况"></a>异常情况</h2><p>一个Raft系统的异常情况通常可以分为两大类：Leader异常和Followe/Candidate异常。</p>
+<p>Follower/Candidate异常问题的解决方法要比Leader异常简单得多。如果一个Follower或者Candidate崩溃了，那么领导人在这之后发送给他们的RequestVote RPC和AppendEntries RPC就会失败。Raft算法通过Leader无限的重试要应对这些失败，直到故障的节点重启并处理了这些RPC为止。如果一个节点在收到RPC之后但在响应之前崩溃了，那么它会在重启之后再次收到同一个RPC。因为Raft算法中的RPC都是幂等的，因此不会有什么问题。例如，如果一个Follower收到了已经包含在其日志中的AppendEntries RPC，那么它会忽略本次请求。</p>
+<p>由于Raft算法是强领导人特性的，因此保证领导人即时出现故障也不影响数据一致性就显得格外重要。</p>
+<p>数据提交的全过程，如图6所示。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图6. Raft算法数据交换示意图</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/data-exchange.svg" class="" title="data-exchange"><br />
+
+<p>图6中，数据的流向只能从Leader节点向Follower节点转移。当Client向集群Leader节点提交数据时，Leader节点接收到的数据处于未提交状态（Uncommitted），接着Leader节点会并发向所有Follower节点复制数据并等待响应，在确保集群中至少有超过半数的节点已经接收到数据之后，再向Client确认数据已接收。一旦Leader节点向Client发出数据接收ACK响应之后，即表明此时数据状态进入已提交（Committed）状态，Leader节点会再次向Follower节点发送通知，告知该数据状态已提交。</p>
+<p>在这个过程中，领导人可能会在任意阶段崩溃，下面将逐一示范Raft算法在各个场景下是如何保障数据一致性的。</p>
+<p><strong>（1）数据到达Leader前</strong></p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图7. 数据到达Leader之前</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/raft-exception1.svg" class="" title="raft-exception1"><br />
+
+<p>这个阶段领导人出现故障不会影响数据一致性。</p>
+<p><strong>（2）数据到达Leader节点，但未复制到Follower节点</strong></p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图8. 数据到达Leader节点，但未复制到Follower节点</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/raft-exception2.svg" class="" title="raft-exception2"><br />
+
+<p>如果在这个阶段Leader出现故障，此时数据属于未提交状态，那么Client不会收到ACK，而是会认为超时失败可安全发起重试。Follower节点上没有该数据，重新选主后Client重试重新提交可成功。原来的Leader节点回复之后将作为Follower加入集群，重新从当前任期的心Leader处同步数据，与Leader数据强制保持一致。</p>
+<p><strong>（3）数据到达Leader节点，成功复制到Follower的部分节点上，但还未向Leader响应接收</strong></p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图9. 数据到达Leader节点，成功复制到Follower的部分节点上，但还未向Leader响应接收</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/raft-exception3.svg" class="" title="raft-exception3"><br />
+
+<p>如果在这个阶段Leader出现故障，此时数据在Follower节点处于未提交状态（Uncommitted）且不一致，那么Raft协议要求投票只能投给拥有最新数据的节点。所以拥有最新数据的节点会被选为Leader，再将数据强制同步到Follower，数据不会丢失并且能够保证最终一致性。</p>
+<p><strong>（4）数据到达Leader节点，成功复制到Follower的所有节点上，但还未向Leader响应接收</strong></p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图10. 数据到达Leader节点，成功复制到Follower的所有节点上，但还未向Leader响应接收</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/raft-exception4.svg" class="" title="raft-exception4"><br />
+
+<p>如果在这个阶段Leader出现故障，虽然此时数据在Follower节点处于未提交状态（Uncommitted），但也能保持一致，那么重新选出Leader后即可完成数据提交，由于此时客户端不知道到底有没有提交成功，因此可重试提交。针对这种情况，Raft要求RPC请求实现幂等性，也就是要实现内部去重机制。</p>
+<p><strong>（5）数据到达Leader节点，成功复制到Follower的所有或大多数节点上，数据在Leader上处于已提交状态，但在Follower上处于未提交状态</strong></p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图11. 数据到达Leader节点，成功复制到Follower的所有或大多数节点上，数据在Leader上处于已提交状态，但在Follower上处于未提交状态</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/raft-exception5.svg" class="" title="raft-exception5"><br />
+
+<p>如果在这个阶段Leader出现故障，那么重新选出新Leader后的处理流程与（3）一样。</p>
+<p><strong>（6）数据到达Leader节点，成功复制到Follower的所有或大多数节点上，数据在所有节点都处于已提交状态，但还未响应Client</strong></p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图12. 数据到达Leader节点，成功复制到Follower的所有或大多数节点上，数据在所有节点都处于已提交状态，但还未响应Client</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/raft-exception6.svg" class="" title="raft-exception6"><br />
+
+<p>如果在这个阶段Leader出现故障，此时集群内部数据其实是一致的，那么Client重复重试基于幂等策略对一致性无影响。</p>
+<p><strong>（7）网络分区导致的集群脑裂情况，出现双Leader</strong></p>
+<p>网络分区将原先的Leader节点和Follower节点分隔开，Follower收不到Leader的心跳将发起选举产生新的Leader。这是就产生了双Leader，原先的Leader独自在一个区，向它提交数据不可能复制到大多数节点上，所以永远都是提交不成功。向新的Leader提交数据可以提交成功，网络恢复后旧的Leader发现集群中有更新任期（Term）的新Leader，则自动降级为Follower并从新Leader处同步数据达成集群数据一致。具体情形如图13所示。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>图13. 网络分区导致的集群脑裂情况，出现双Leader</font>
+</center>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/raft-exception7.svg" class="" title="raft-exception7"><br />
+
+
+
+<p>以上七种场景穷举了一个三节点的最小集群面临的所有异常情况，可以看出Raft算法在各种异常场景下均能保证数据的一致性。</p>
+<h2 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h2><h3 id="日志压缩与快照"><a href="#日志压缩与快照" class="headerlink" title="日志压缩与快照"></a>日志压缩与快照</h3><p>在实际的系统中，Raft结点上的日志记录不可能无限制地增加下去。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/13171/compress-snapshot.png" class="" title="compress-snapshot"><br />
+
+
+
+<p>定时的将状态机中的状态生成快照，而将之前的日志全部删除，是一种常见的压缩方式。</p>
+<ol>
+<li>将节点的状态保存为LSM Tree，然后存储最后应用日志的索引与任期，以保证日志匹配特性</li>
+<li>持集群的配置更新，快照中也要将最后应用的集群配置也当做状态保存下来</li>
+<li>跟随者需要的日志已经在领导者上面被删除时，需要将快照通过RPC发送过</li>
+</ol>
+<p>注意：由领导人调用以将快照的分块发送给跟随者。领导者总是按顺序发送分块。</p>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>表5. InstallSnapshot RPC返回值列表</font>
+</center>
+
+
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>term</td>
+<td>领导人的任期号</td>
+</tr>
+<tr>
+<td>leaderId</td>
+<td>领导人的Id，以便于跟随者重定向请求</td>
+</tr>
+<tr>
+<td>lastIncluedIndex</td>
+<td>快照中包含的最后日志条目的索引值</td>
+</tr>
+<tr>
+<td>lastIncludedTerm</td>
+<td>快照中包含的最后日志条目的任期号</td>
+</tr>
+<tr>
+<td>offset</td>
+<td>分块在快照中的字节偏移量</td>
+</tr>
+<tr>
+<td>data[]</td>
+<td>从偏移量开始的快照分块的原始字节</td>
+</tr>
+<tr>
+<td>done</td>
+<td>如果这是最后一个</td>
+</tr>
+</tbody></table>
+<center>
+    <font face="Old English Text MT" color="#555555" size=3>表6. InstallSnapshot RPC返回值列表</font>
+</center>
+
+<table>
+<thead>
+<tr>
+<th>结果</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>term</td>
+<td>当前任期号（currentTerm），便于领导人更新自己的任期号</td>
+</tr>
+</tbody></table>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">如果term &lt; currentTerm就立即拒绝</span><br><span class="line">如果是第一个分块（offset = 0）就创建一个新的快照</span><br><span class="line">在指定偏移量写入数据</span><br><span class="line">如果 done 是 false，则继续等待更多的数据 ack</span><br><span class="line">保存快照文件，丢弃具有较小索引的任何现有或部分快照</span><br><span class="line">如果现存的日志条目与快照中最后包含的日志条目具有相同的索引值和任期号，则保留</span><br><span class="line">否则，丢弃整个日志</span><br><span class="line">使用快照重置状态机，并架子啊快照的集群配置</span><br></pre></td></tr></table></figure>
+
+<p>Q: 快照何时创建？过于频繁会浪费性能，过于低频则日志占用磁盘的量更大，重建时间更长。</p>
+<p>A: 限定日志文件大小到达某一个阈值后立刻生成快照。</p>
+<p>Q: 写入快照花费的时间昂贵如何处理？如何保证不影响节点的正常工作？</p>
+<p>A: 使用写时复制技术，状态机的函数式顺序性天然支持。</p>
+<h3 id="调节参数"><a href="#调节参数" class="headerlink" title="调节参数"></a>调节参数</h3><ol>
+<li>心跳的随机时间，过快会增加网络负载，过慢则导致感知领导者崩溃的时间更长</li>
+<li>选举的随机时间，如果大部分跟随者同时变为候选人则会导致选票被瓜分</li>
+</ol>
+<h3 id="流批结合"><a href="#流批结合" class="headerlink" title="流批结合"></a>流批结合</h3><p>首先可以做的就是batch，在很多情况下面，使用batch能明显提高性能，譬如对于RocksDB的写入来说，我们通过不会每次写入一个值，而是会用一个WriteBatch缓存一批修改，然后再整个写入。对于Raft来说，Leader可以一次手机多个requests，然后一批发送给Follower。当然，我们也需要有一个最大发送size来限制每次最多可以发送多少数据。</p>
+<p>如果只是用batch，Leader还是需要等待Follower返回才能继续后面的流程，我们这里还可以使用Pipeline来进行加速。Leader会维护一个NextIndex的变量来表示下一个给Follower发送的log位置，通常情况下，只要Leader跟Follower建立起了连接，我们都会认为网络是稳定互通的。所以当Leader给Follower发送了一批log之后，它可以直接更新NextIndex，并且立刻发送后面的log，不需要等待Follower的返回。如果网络出现了错误，或者Follower返回一些错误，Leader就需要重新调整NextIndex，然后重新发送log。</p>
+<h3 id="并行追加"><a href="#并行追加" class="headerlink" title="并行追加"></a>并行追加</h3><p>对于上面提到的一次request简易Raft流程来说，Leader可以先并行的将log发送给Followers，然后再将log append。为什么可以这么做，主要是因为在Raft里面，如果一个log被大多数的结点append，我们就可以认为这个log是被committed了，所以即使Leader再给Follower发送log之后，自己append log失败panic了，只要<code>N / 2 + 1</code>个Follower能接收到这个log并成功append，我们仍可以认为这个log是被committed了，被committed了，被committed的log后续就一定能被成功apply。</p>
+<p>原因：主要是因为append log会涉及到落盘，有开销，所以我们完全可以在Leader落盘的同时让Follower也尽快的收到log是被committed了，这样系统就有丢失数据的风险了。</p>
+<p>这里我们还需要注意，虽然Leader能在append log之前给Follower发log，但是Follower却不能在append log之前告诉Leader已经成功append这个log。如果Follower提前告诉Leader说已经成功append，但实际后面append log的时候失败了，Leader仍然会认为这个log是被committed了，这样系统就有丢失数据的风险了。</p>
+<h3 id="异步应用"><a href="#异步应用" class="headerlink" title="异步应用"></a>异步应用</h3><p>当一个log被大部分节点append之后，我们就可以认为这个log被committed了，被committed的log在什么时候apply都不会再影响数据的一致性。所以当一个log被committed之后，我么可以用另一个线程去异步的apply这个log。<br>所以整个Raft流程就可以变成：</p>
+<ol>
+<li>Leader接受一个client发送的request。</li>
+<li>Leader将对应的log发送给其他Follower并本地append。</li>
+<li>Leader继续接受其他client的requests，持续进行步骤2。</li>
+<li>Leader发现log已经被committed，在另一个线程apply。</li>
+<li>Leader异步apply log之后，返回结果给对应的client。</li>
+</ol>
+<p>使用 asychronous apply的好处在于我们现在可以安全的并行处理append log和apply log，虽然对于一个client来说，它的一次request仍然要走完完整的Raft流程，但对于多个clients来说，整体的并发和吞吐量是上去了。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] 📓 <a target="_blank" rel="noopener" href="https://book.douban.com/subject/30386518/">云原生分布式存储基石</a></p>
+<p>[2] 📑 <a target="_blank" rel="noopener" href="https://github.com/maemual/raft-zh_cn">RAFT论文中文翻译</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.parak.top">Khighness</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.parak.top/posts/13171">https://www.parak.top/posts/13171</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 </a>许可协议。转载请注明来自<a href="https://www.parak.top">炒菜K殿下</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Paper/">Paper</a><a class="post-meta__tags" href="/tags/Distributed-consensus/">Distributed-consensus</a></div><div class="post_share"><div class="social-share" data-image="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-64.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/18127/"><img class="prev-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-65.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">秋招</div></div></a></div><div class="next-post pull-right"><a href="/posts/15536/"><img class="next-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-63.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Spring-事务原理</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/47899/" title="GFS-NOTE"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-87.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-01-29</div><div class="title">GFS-NOTE</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#RAFT%E6%A6%82%E8%BF%B0"><span class="toc-text">RAFT概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E5%88%86%E8%A7%A3"><span class="toc-text">问题分解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E7%AE%80%E5%8C%96"><span class="toc-text">状态简化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0"><span class="toc-text">算法实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E8%A7%92%E8%89%B2"><span class="toc-text">节点角色</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E5%90%8C%E6%AD%A5"><span class="toc-text">时间同步</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%86%E5%AF%BC%E4%BA%BA%E9%80%89%E4%B8%BE"><span class="toc-text">领导人选举</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A5%E5%BF%97%E5%A4%8D%E5%88%B6"><span class="toc-text">日志复制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E6%80%A7Q-amp-A"><span class="toc-text">安全性Q&amp;A</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E7%94%A8%E6%80%A7%E4%B8%8E%E6%97%B6%E5%BA%8F"><span class="toc-text">可用性与时序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8%E6%83%85%E5%86%B5"><span class="toc-text">异常情况</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="toc-text">性能优化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A5%E5%BF%97%E5%8E%8B%E7%BC%A9%E4%B8%8E%E5%BF%AB%E7%85%A7"><span class="toc-text">日志压缩与快照</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B0%83%E8%8A%82%E5%8F%82%E6%95%B0"><span class="toc-text">调节参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%81%E6%89%B9%E7%BB%93%E5%90%88"><span class="toc-text">流批结合</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B9%B6%E8%A1%8C%E8%BF%BD%E5%8A%A0"><span class="toc-text">并行追加</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%82%E6%AD%A5%E5%BA%94%E7%94%A8"><span class="toc-text">异步应用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background: gray"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By Khighness</div><div class="footer_custom_text"><a href="https://www.foreverblog.cn/" target="_blank" > <img src="https://img.foreverblog.cn/logo_en_default.png" alt="" style="width:auto;height:16px;"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'Py2eOHzSdrnxKPzKrOJaHJOq-9Nh9j0Va',
+      appKey: '9eQhwuCgyshpYKn4rtEhqt4R',
+      placeholder: '',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: true,
+      serverURLs: '',
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/Khighness/cdn/js/emotion.json',
+      emojiMaps: "",
+      enableQQ: true,
+      path: window.location.pathname,
+      requiredFields: ["nick, mail"],
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://unpkg.com/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="//code.tidio.co/ao1f4qdjllf8yowzz7v5brdaejt42uoi.js" async="async"></script><script>function onTidioChatApiReady() {
+  window.tidioChatApi.hide();
+  window.tidioChatApi.on("close", function() {
+    window.tidioChatApi.hide();
+  });
+}
+if (window.tidioChatApi) {
+  window.tidioChatApi.on("ready", onTidioChatApiReady);
+} else {
+  document.addEventListener("tidioChat-ready", onTidioChatApiReady);
+}
+
+var chatBtnFn = () => {
+  document.getElementById("chat_btn").addEventListener("click", function(){
+    window.tidioChatApi.show();
+    window.tidioChatApi.open();
+  });
+}
+chatBtnFn()
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>function history_calendar_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-history"><div class="card-content"><div class="item-headline"><i class="fas fa-clock fa-spin"></i><span>那年今日</span></div><div id="history-baidu" style="height: 100px;overflow: hidden"><div class="history_swiper-container" id="history-container" style="width: 100%;height: 100%"><div class="swiper-wrapper" id="history_container_wrapper" style="height:20px"></div></div></div></div>';
+                console.log('已挂载history_calendar')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            history_calendar_injector_config()
+        } </script><script data-pjax  src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script><script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/js/main.js"></script><!-- hexo injector body_end end --></body></html>

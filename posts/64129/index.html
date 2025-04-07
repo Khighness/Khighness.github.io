@@ -1,0 +1,501 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Time-2-LamportClock | Khighness</title><meta name="keywords" content="Time"><meta name="author" content="Khighness"><meta name="copyright" content="Khighness"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="由于NTP协议存在误差，所以不能通过机器上的本地时间来确定顺序，Lamport老爷子在1978年提出的Lamport逻辑时钟是解决这个问题的方法之一。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Time-2-LamportClock">
+<meta property="og:url" content="https://www.parak.top/posts/64129/index.html">
+<meta property="og:site_name" content="Khighness">
+<meta property="og:description" content="由于NTP协议存在误差，所以不能通过机器上的本地时间来确定顺序，Lamport老爷子在1978年提出的Lamport逻辑时钟是解决这个问题的方法之一。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-80.jpg">
+<meta property="article:published_time" content="2022-09-26T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-10-09T02:59:55.633Z">
+<meta property="article:author" content="Khighness">
+<meta property="article:tag" content="Time">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-80.jpg"><link rel="shortcut icon" href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/K.jpg"><link rel="canonical" href="https://www.parak.top/posts/64129/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//s4.cnzz.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?16576652";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script async="async" data-pjax="data-pjax" src="https://s4.cnzz.com/z_stat.php?id=1279324689&amp;web_id=1279324689"></script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Khighness","link":"链接: ","source":"来源: Khighness","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-10-09 10:59:55'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/background.css"><link rel="stylesheet" href="/css/iconfont/iconfont.css"><link rel="stylesheet" href="/css/mouse.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/css/main.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Khighness" type="application/atom+xml">
+</head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/Khighness.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">93</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">40</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-80.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Khighness</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Time-2-LamportClock</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-09-26T16:00:00.000Z" title="发表于 2022-09-27 00:00:00">2022-09-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-10-09T02:59:55.633Z" title="更新于 2022-10-09 10:59:55">2022-10-09</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Time/">Time</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">3.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>11分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Time-2-LamportClock"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="时间的误差"><a href="#时间的误差" class="headerlink" title="时间的误差"></a>时间的误差</h2><p>NTP协议存在误差，所以不能通过机器上的本地时间来确定顺序。Lamport逻辑时钟是解决这个问题的方法之一，这个方法是Lamport老爷子在1978年的论文<a target="_blank" rel="noopener" href="https://lamport.azurewebsites.net/pubs/time-clocks.pdf">《Time, Clocks, and the Ordering of Events in a Distributed System》</a>提出的。</p>
+<h2 id="为什么需要顺序"><a href="#为什么需要顺序" class="headerlink" title="为什么需要顺序"></a>为什么需要顺序</h2><p>首先解释下为什么分布式系统需要知道事件的先后顺序。举个🌰：分布式数据库中不同事务并发执行的时候，需要做事务隔离。隔离的一种做法是使用MVCC（Multiple Version Concurrent Control）多版本并发控制，根据数据的版本号来控制该版本数据的可见性。这时候就需要知道数据修改事件的先后顺序才能正确的实现隔离性。</p>
+<h2 id="偏序和全序"><a href="#偏序和全序" class="headerlink" title="偏序和全序"></a>偏序和全序</h2><p>在介绍Lamport逻辑时钟前，需要先介绍两个数学概念：偏序（partial order）和全序（total order）。</p>
+<p>偏序和全序是数学序理论中的概念，主要指集合中元素的顺序关系。</p>
+<p>偏序的定义如下：</p>
+<blockquote>
+<p>给定集合S，”<em>≤</em>“是S上的二元关系，若”<em>≤</em>“满足：</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%87%AA%E5%8F%8D%E5%85%B3%E7%B3%BB">自反性</a>：∀a∈S，有a≤a；</li>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%AF%B9%E7%A7%B0%E5%85%B3%E7%B3%BB">反对称性</a>：∀a，b∈S，a≤b且b≤a，则a=b；</li>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E4%BC%A0%E9%80%92%E5%85%B3%E7%B3%BB">传递性</a>：∀a，b，c∈S，a≤b且b≤c，则a≤c；</li>
+</ol>
+<p>则称”<em>≤</em>“是S上的<strong>非严格偏序</strong>或者<strong>自反偏序</strong>。</p>
+</blockquote>
+<p>偏序定规中最重要的是传递性，如果a &lt; b并且b &lt; c，则a &lt; c。</p>
+<p>全序和偏序相比，多了一个完全性，全序定义如下：</p>
+<blockquote>
+<p>全序关系即集合上的反对称的、传递和完全的二元关系（一般称其为 <strong>≤</strong>)。</p>
+<p>若<strong>X</strong>满足全序关系，则下列陈述对于<strong>X</strong>中的所有<strong>a,b</strong>和<strong>c</strong>成立：</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%AF%B9%E7%A7%B0%E5%85%B3%E7%B3%BB">反对称性</a>：若<strong>a ≤ b</strong>且<strong>b ≤ a</strong>，则 <strong>a=b</strong>；</li>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E4%BC%A0%E9%80%92%E5%85%B3%E7%B3%BB">传递性</a>：若<strong>a ≤ b</strong>且<strong>b ≤ c</strong>则<strong>a ≤ c</strong>；</li>
+<li>完全性：<strong>a ≤ b</strong>或<strong>b ≤ a</strong></li>
+</ol>
+</blockquote>
+<p>简单的说，偏序的意思是说集合中的元素是部分有序的，而全序的意思是集合中任意一对元素都是可以相互比较的，可以完全排序。</p>
+<p>下面是一些例子：</p>
+<ul>
+<li>自然数的集合是全序</li>
+<li>整数的集合是全序。</li>
+<li>复数的集合是偏序，1和100i是无法比较的，没有意义。</li>
+</ul>
+<p>对于分布式系统来说，我们想知道事件的先后顺序，实际上就是希望创建一种全序的关系来描述事件的顺序。</p>
+<h2 id="Lamport逻辑时钟算法"><a href="#Lamport逻辑时钟算法" class="headerlink" title="Lamport逻辑时钟算法"></a>Lamport逻辑时钟算法</h2><p>既然物理时钟不可靠，那就人为构造一个递增的序列来为事件排序，这就是Lamport逻辑时钟的基本思想。</p>
+<p>首先需要定义先后关系（happened before），我把事件a发生在b之前定义为a → b。以下下三种条件都满足a → b：</p>
+<ol>
+<li>a和b是同一个进程内的事件，a发生在b之前，则a → b。</li>
+<li>a和b在不同的进程中，a是发送进程内的发送的发送事件，b是同一消息接收进程内的接收事件，则a → b。</li>
+<li>如果a → b并且b → c，则a → c。</li>
+</ol>
+<p>如果a和b没有先后关系，则称两个事件是并发的，计作 a || b。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/64129/p1.png" class="" title="p1">
+<center>图1</center>
+
+<p>上图中，有两个进程A和B，每个点表示一个事件，黑色点表示进程内的事件，蓝色点表示进程的发送消息事件，红色点表示进程的接收消息事件。可以从上图得出：</p>
+<ul>
+<li>a → b → c → d</li>
+<li>a → b → e</li>
+<li>f → c → d</li>
+<li>a || f</li>
+<li>e || d</li>
+<li>b || f</li>
+<li>e || c</li>
+</ul>
+<p>a → b除了可以表示两个事件的先后关系，也可以理解为两个事件的因果关系，a事件导致了b事件的发生，或者说a事件影响了b事件，而a || b也可以理解为两个事件没有因果关系，比如上图中，e和c两个事件就像是从b开始发展出了两个平行世界，相互不再受对方的影响。</p>
+<br />
+
+<p>我们引入逻辑时钟算法：</p>
+<div class="note icon simple"><i class="note-icon fab fa-korvue"></i><p><strong>Lamport逻辑时钟算法</strong></p>
+<p>分布式系统中每个进程Pi保存一个本地逻辑时钟值Ci，Ci(a)表示进程Pi发生事件a时的逻辑时钟值，Ci的更新算法如下：</p>
+<ol>
+<li>进程Pi每发生一次事件，Ci + 1；</li>
+<li>进程Pi给进程Pj发送消息，需要带上自己的本地逻辑时钟Ci；</li>
+<li>进程Pj接收消息，更新Cj = max(Ci, Cj) + 1。</li>
+</ol>
+</div>
+
+<br />
+
+<p>图一的逻辑时钟值如下：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/64129/p2.png" class="" title="p2">
+<center>图2</center>
+
+<p>从以上算法可以很容易得出下面两个结论：</p>
+<ol>
+<li>同一进程内的两个事件a和b，如果a → b，那么Ci(a) &lt; Ci(b)；</li>
+<li>a是Pi进程的消息发送事件，b是Pj进程该消息的接收事件，那么Ci(a) &lt; Cj(b)。</li>
+</ol>
+<p>由以上两个结论又可以得出：</p>
+<p>对于任意两个事件a和b，如果a → b，那么C(a) &lt; C(b)。</p>
+<p>问题来了，如果C(a) &lt; C(b)，那么可以得出a → b吗？</p>
+<p>答案是不能，举个反例，图二中C(e) = 2，C(d) = 3，虽然C(e) &lt; C(d)，但并不能得出e → d，e和d实际上是并发关系e || d，也就是说由于并发的存在，导致反向的推论并不成立。</p>
+<h2 id="全序事件集"><a href="#全序事件集" class="headerlink" title="全序事件集"></a>全序事件集</h2><p>上面介绍的逻辑时钟算法构造的整个事件集合（happened before →）是一种偏序关系，只有部分事件可以比较大小。我们可以加入另外一个条件也就是判断两个进程号的大小，可以使整个事件集合变成一种全序关系。</p>
+<p>定义全序 ⇒ 关系如下：Pi进程的事件a和Pj进程的事件b如果满足下面两个关系中的任何一个，则称a ⇒ b。</p>
+<ol>
+<li>Ci(a) &lt; Cj(b)；</li>
+<li>Ci(a) = Cj(b) 并且Pi &lt; Pj。</li>
+</ol>
+<p>全序关系 ⇒ 把偏序关系 → 变成了任何两个元素都可比较的全序关系，而且有a → b，则a ⇒ b。</p>
+<p>图二中假设A进程号为1，B进程为2，事件的全序关系如下：a ⇒ f ⇒ b ⇒ e ⇒ c ⇒ d。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/64129/p3.png" class="" title="p3">
+<center>图3</center>
+
+<p>注意即使物理事件上e发生于d之后，但由于两个事件没有因果关系，所以排序时没有按照物理事件顺序也不会有问题。</p>
+<h2 id="真·分布式锁"><a href="#真·分布式锁" class="headerlink" title="真·分布式锁"></a>真·分布式锁</h2><p>全序关系 ⇒ 有什么用呢？</p>
+<p>在论文中，Lamport老爷子举了一个分布式锁的例子来描述 ⇒ 的作用。这个分布式锁需要满足以下要求：</p>
+<ol>
+<li>获得锁的进程必须释放锁后，其他进程才能获得锁，也就是一个互斥锁。</li>
+<li>不同进程获得锁的顺序必须和请求的顺序一致。</li>
+<li>如果每个进程最终都会释放锁，那么所有的进程发出的锁请求最终都能满足。</li>
+</ol>
+<p>在常见的分布式锁实现中，大都有一个中心服务器来控制锁的获取和释放，但是中心服务器很容易遇到网络延迟问题导致违反要求2，举例如下：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/64129/p4.png" class="" title="p4">
+<center>图4</center>
+
+<p>P0是中心进程，P1发送锁请求给P0，然后P1发送消息给P2，P2收到消息后，给P0也发送了锁请求，但是由于网络原因，P2的请求比P1的请求先到P0，导致P2先获得了锁。</p>
+<br />
+
+<p>Lamport老爷子提供了一种方案来解决这个问题，这种方案不需要中心服务器，可以说是真·分布式锁。方案中，每个进程保存了本地逻辑时钟 <strong>Ti</strong>，它的更新算法和前文介绍的Lamport逻辑时钟一样，同时保存了一个队列，队列中的每个元素是 <strong>Tm : Pi</strong> 。<strong>Tm</strong> 是消息发送时的本地逻辑时钟，<strong>Pi</strong> 是进程i的进程号。方案有个前提条件是两个进程间的消息可以有延迟，但最终一定能送达，而且两个进程间的消息是保序的。</p>
+<div class="note icon simple"><i class="note-icon fab fa-korvue"></i><p><strong>Lamport真·分布式锁</strong></p>
+<ol>
+<li><p>如果进程 <strong>Pi</strong> 需要获取锁，发送 <strong>Tm : Pi</strong> 消息给所有其他进程。</p>
+</li>
+<li><p>进程Pj收到锁请求消息后，将 <strong>Tm : Pi</strong> 放入本地队列中，更新本地逻辑时钟 <strong>Tj</strong>，然后回复一个带 <strong>Tj</strong> 的 <strong>ACK</strong> 消息给 <strong>Pi</strong> 。</p>
+</li>
+<li><p>当以下两个条件满足时，进程 <strong>Pi</strong> 获得锁：</p>
+<p>3.1 按照全序关系 ⇒ 排序后， <strong>Tm : Pi</strong> 在本地队列的队首。</p>
+<p>3.2 进程 <strong>Pi</strong> 收到过其他进程发来的消息，消息中的时钟 <strong>Tj</strong> 大于 <strong>Tm</strong> 。</p>
+</li>
+<li><p>如果进程 <strong>Pi</strong> 需要释放锁，先从本地队列中移除 <strong>Tm : Pi</strong> ，然后给其他所有进程发送锁释放消息，消息中带上当前时钟 <strong>Ti</strong> 。</p>
+</li>
+<li><p>进程 <strong>Pj</strong> 收到锁释放消息后，从本地队列中移除 <strong>Tm : Pi</strong> 。</p>
+</li>
+</ol>
+</div>
+
+<br />
+
+<p>举个例子来描述：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/64129/p5.png" class="" title="p5">
+<center>图5</center>
+
+<p>上图有三个进程P0, P1和P2。图中每个节点上的文字第一行数字表示本地逻辑时钟Ti，第二行方括号表示本地队列，第三行的字母表示节点名字。</p>
+<ol>
+<li>首先P0发出获取锁请求给P1和P2，消息内容为[1:0]。</li>
+<li>P1和P2收到后，返回ACK给P0，并带上各自的本地逻辑时钟值。</li>
+<li>P0在g节点收齐ACK后，发现满足算法第3条中的两个条件，自己获得了锁。</li>
+<li>P1在h节点也想获取锁，发送锁请求给P0和P2，消息内容为[4:1]。同时把[4:1]也插入本地队列中，但全序排序后，[1:0] &lt; [4:1]，所以[4:1]排在[1:0]后面。</li>
+<li>P0和P2收到后，返回ACK给P0，并带上各自的本地逻辑时钟。</li>
+<li>P1在n节点收齐ACK后，虽然满足条件3.2，但不满足条件3.1，[4:1]没有排在队列的队首，还未获得锁。</li>
+<li>P0释放锁，发送释放请求给P1和P2。</li>
+<li>P1和P2收到释放锁请求后，把[1:0]从本地队列中删除。</li>
+<li>P1发现此时[4:1]排在队首，满足条件，获得锁。</li>
+</ol>
+<p>条件3.2中为什么要收到过Tj大于Tm的消息才行，如果Tj小于Tm能不能行？</p>
+<p>答案是不能，因为Pi收到过其他进程发来的消息，说明Pi知道了其他进程的请求状态，如果其他进程发来的是加锁请求，并且Tj小于Tm，如果Pi此时认为自己获取锁，就和条件3.1矛盾了，[Tm:Pi]并没有排在队列的首部。</p>
+<p>条件3.2中Pi收到过其他进程的消息，说明Pi知道了其他进程的请求状态，Tj 大于 Tm说明如果没有其他进程已经加锁的情况下，[Tm:Pi]排在队首。条件3.1说明当前没有其他进程加锁，综合这两个条件说明Pi获得锁。</p>
+<br  />
+
+<p>再举个竞争条件的例子：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/64129/p6.png" class="" title="p6">
+<center>图6</center>
+
+<p>上图中，P0，P1，P2的本地逻辑时钟分别是25，22，20：</p>
+<ol>
+<li>首先P0在节点a发出获取锁请求给P1和P2，消息内容为[25:0]。</li>
+<li>P2在稍晚一点的时间节点d也发出了获取锁请求给P0和P1，消息内容为[20:2]。</li>
+<li>P2在f节点收到P0的锁请求，把[25:0]插入到本地队列中，但全序排序后，[25:0] &lt; [20:2]，所以P2的锁请求排在前面。</li>
+<li>P0在h节点收到P2的锁请求，同样把[20:2]插入到本地队列首部。</li>
+<li>P0在m节点收齐P1和P2的ACK，但是不满足获取锁的条件3.1，也即[25:0]没有排在队列的队首，所以P0还未获得锁。</li>
+<li>P2在n节点收齐P0和P2的ACK，此时满足获取锁的两个条件，P2获得锁。</li>
+</ol>
+<p>这个例子中，虽然绝对物理时间上P2发起锁请求晚于P0，但是P0和P2的请求没有因果关系，所以全序排序后P0的请求晚于P2，这个并不会有什么问题。</p>
+<p>系统中没有中心服务器，每个进程独立运行以上算法，就可以满足上面分布式锁的三条要求，实在是太精妙了。</p>
+<p>这个算法还可以解决分布式系统的一致性问题，可以说是Paxos算法的前身，具体可以参考普林斯顿大学分布式系统课程<a target="_blank" rel="noopener" href="https://www.cs.princeton.edu/courses/archive/fall19/cos418/docs/L4-time.pdf">Time and Logical Clocks</a>中的多副本银行例子。</p>
+<p>这个算法也有缺点，就是不能容忍进程崩溃，一旦有进程崩溃，整个系统就无法运作了。</p>
+<h2 id="异常行为"><a href="#异常行为" class="headerlink" title="异常行为"></a>异常行为</h2><p>全序关系 ⇒ 可以为系统中所有事件排序，但是系统外的事件却可能破坏这种关系，导致异常行为。举个例子，一个全国范围的分布式系统，假设北京的一个用户向进程A发起了请求a，然后电话通知上海的朋友向进程B发起请求b，在全序时钟关系 ⇒ 中，很可能 b ⇒ a，但实际上a却发生在b之前。</p>
+<p>造成这个异常行为的原因是北京用户给上海朋友打电话（发送消息）这个事件并没有在我们的分布式系统中，它是一个外部事件，我们的分布式系统并不能感知到这个外部事件。</p>
+<p>解决这个问题有两个方法：</p>
+<p>第一种方法是给外部事件也加上分布式系统的时钟，比如上面例子中，a事件的逻辑时钟是Ta，给上海朋友电话时，带上Ta，然后上海朋友提交b请求时带上晚于Ta的时钟。</p>
+<p>第二种方法是引入物理时钟，这种方法和Google Spanner的TrueTime很类似，后面介绍TrueTime的时候再介绍这种方法。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p>[1] <a target="_blank" rel="noopener" href="https://lamport.azurewebsites.net/pubs/time-clocks.pdf">Time, Clocks, and the Ordering of Events in a Distributed System</a><br>[2] <a target="_blank" rel="noopener" href="https://writings.sh/post/logical-clocks">逻辑时钟 - 如何刻画分布式中的事件顺序</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.parak.top">Khighness</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.parak.top/posts/64129">https://www.parak.top/posts/64129</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 </a>许可协议。转载请注明来自<a href="https://www.parak.top">炒菜K殿下</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Time/">Time</a></div><div class="post_share"><div class="social-share" data-image="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-80.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/46081/"><img class="prev-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-81.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Time-3-向量时钟</div></div></a></div><div class="next-post pull-right"><a href="/posts/42549/"><img class="next-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-79.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Time-1-NTP协议</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/5498/" title="Time-5-混合逻辑时钟"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-83.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-30</div><div class="title">Time-5-混合逻辑时钟</div></div></a></div><div><a href="/posts/4622/" title="Time-4-TrueTime"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-82.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-29</div><div class="title">Time-4-TrueTime</div></div></a></div><div><a href="/posts/46081/" title="Time-3-向量时钟"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-81.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-28</div><div class="title">Time-3-向量时钟</div></div></a></div><div><a href="/posts/42549/" title="Time-1-NTP协议"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-79.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-26</div><div class="title">Time-1-NTP协议</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E7%9A%84%E8%AF%AF%E5%B7%AE"><span class="toc-number">1.</span> <span class="toc-text">时间的误差</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E9%A1%BA%E5%BA%8F"><span class="toc-number">2.</span> <span class="toc-text">为什么需要顺序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%8F%E5%BA%8F%E5%92%8C%E5%85%A8%E5%BA%8F"><span class="toc-number">3.</span> <span class="toc-text">偏序和全序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lamport%E9%80%BB%E8%BE%91%E6%97%B6%E9%92%9F%E7%AE%97%E6%B3%95"><span class="toc-number">4.</span> <span class="toc-text">Lamport逻辑时钟算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%A8%E5%BA%8F%E4%BA%8B%E4%BB%B6%E9%9B%86"><span class="toc-number">5.</span> <span class="toc-text">全序事件集</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9C%9F%C2%B7%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="toc-number">6.</span> <span class="toc-text">真·分布式锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8%E8%A1%8C%E4%B8%BA"><span class="toc-number">7.</span> <span class="toc-text">异常行为</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-number">8.</span> <span class="toc-text">参考文献</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background: gray"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By Khighness</div><div class="footer_custom_text"><a href="https://www.foreverblog.cn/" target="_blank" > <img src="https://img.foreverblog.cn/logo_en_default.png" alt="" style="width:auto;height:16px;"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'Py2eOHzSdrnxKPzKrOJaHJOq-9Nh9j0Va',
+      appKey: '9eQhwuCgyshpYKn4rtEhqt4R',
+      placeholder: '',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: true,
+      serverURLs: '',
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/Khighness/cdn/js/emotion.json',
+      emojiMaps: "",
+      enableQQ: true,
+      path: window.location.pathname,
+      requiredFields: ["nick, mail"],
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://unpkg.com/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="//code.tidio.co/ao1f4qdjllf8yowzz7v5brdaejt42uoi.js" async="async"></script><script>function onTidioChatApiReady() {
+  window.tidioChatApi.hide();
+  window.tidioChatApi.on("close", function() {
+    window.tidioChatApi.hide();
+  });
+}
+if (window.tidioChatApi) {
+  window.tidioChatApi.on("ready", onTidioChatApiReady);
+} else {
+  document.addEventListener("tidioChat-ready", onTidioChatApiReady);
+}
+
+var chatBtnFn = () => {
+  document.getElementById("chat_btn").addEventListener("click", function(){
+    window.tidioChatApi.show();
+    window.tidioChatApi.open();
+  });
+}
+chatBtnFn()
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>function history_calendar_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-history"><div class="card-content"><div class="item-headline"><i class="fas fa-clock fa-spin"></i><span>那年今日</span></div><div id="history-baidu" style="height: 100px;overflow: hidden"><div class="history_swiper-container" id="history-container" style="width: 100%;height: 100%"><div class="swiper-wrapper" id="history_container_wrapper" style="height:20px"></div></div></div></div>';
+                console.log('已挂载history_calendar')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            history_calendar_injector_config()
+        } </script><script data-pjax  src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script><script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/js/main.js"></script><!-- hexo injector body_end end --></body></html>

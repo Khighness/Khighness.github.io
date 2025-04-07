@@ -1,0 +1,1608 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MySQL | Khighness</title><meta name="keywords" content="MySQL"><meta name="author" content="Khighness"><meta name="copyright" content="Khighness"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="学习B站尚硅谷周阳老师的MySQL视频笔记，重点是Mjoin查询、explain性能分析、SQL优化和索引建立，后面是慢查询日志、锁机制和主从复制。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL">
+<meta property="og:url" content="https://www.parak.top/posts/c24675b4/index.html">
+<meta property="og:site_name" content="Khighness">
+<meta property="og:description" content="学习B站尚硅谷周阳老师的MySQL视频笔记，重点是Mjoin查询、explain性能分析、SQL优化和索引建立，后面是慢查询日志、锁机制和主从复制。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-15.jpg">
+<meta property="article:published_time" content="2021-03-26T02:51:00.000Z">
+<meta property="article:modified_time" content="2022-01-13T04:01:56.263Z">
+<meta property="article:author" content="Khighness">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-15.jpg"><link rel="shortcut icon" href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/K.jpg"><link rel="canonical" href="https://www.parak.top/posts/c24675b4/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//s4.cnzz.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?16576652";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script async="async" data-pjax="data-pjax" src="https://s4.cnzz.com/z_stat.php?id=1279324689&amp;web_id=1279324689"></script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Khighness","link":"链接: ","source":"来源: Khighness","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-01-13 12:01:56'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/background.css"><link rel="stylesheet" href="/css/iconfont/iconfont.css"><link rel="stylesheet" href="/css/mouse.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/css/main.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Khighness" type="application/atom+xml">
+</head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/Khighness.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">93</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">40</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-15.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Khighness</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">MySQL</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-03-26T02:51:00.000Z" title="发表于 2021-03-26 10:51:00">2021-03-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-01-13T04:01:56.263Z" title="更新于 2022-01-13 12:01:56">2022-01-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/MySQL/">MySQL</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">15.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>59分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="MySQL"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="MySQL概述"><a href="#MySQL概述" class="headerlink" title="MySQL概述"></a>MySQL概述</h2><h3 id="CentOS7安装"><a href="#CentOS7安装" class="headerlink" title="CentOS7安装"></a>CentOS7安装</h3><blockquote>
+<p>下载RPM安装包</p>
+</blockquote>
+<p>下载: <a target="_blank" rel="noopener" href="https://downloads.mysql.com/archives/community/">mysql download</a></p>
+<p>将四个包下载后移动到opt文件夹下</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314104200636.png" class="" title="s"><br />
+
+
+
+
+
+
+<blockquote>
+<p>检查是否已安装MySQL</p>
+</blockquote>
+<p>如果没有信息显示则表示未安装MySQL</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rpm -qa | grep -i mysql</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>安装MySQL</p>
+</blockquote>
+<p><code>-i</code>：显示套件的文件列表</p>
+<p><code>-v</code>：显示指令执行过程</p>
+<p><code>-h</code>：套件安装时列出标记</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rpm -ivh &lt;包名&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>安装顺序：</p>
+<ol>
+<li>common</li>
+<li>libs</li>
+<li>client</li>
+<li>server</li>
+</ol>
+<p>依赖冲突：</p>
+<p>直接卸载mariadb</p>
+<p>详情如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">[root@parak opt]# rpm -ivh mysql-community-common-8.0.20-1.el7.x86_64.rpm </span><br><span class="line">警告：mysql-community-common-8.0.20-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY</span><br><span class="line">准备中...                          ################################# [100%]</span><br><span class="line">正在升级/安装...</span><br><span class="line">   1:mysql-community-common-8.0.20-1.e################################# [100%]</span><br><span class="line">[root@parak opt]# rpm -ivh mysql-community-libs-8.0.20-1.el7.x86_64.rpm </span><br><span class="line">警告：mysql-community-libs-8.0.20-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY</span><br><span class="line">错误：依赖检测失败：</span><br><span class="line">	mariadb-libs 被 mysql-community-libs-8.0.20-1.el7.x86_64 取代</span><br><span class="line">[root@parak opt]# rpm -qa | grep mariadb</span><br><span class="line">mariadb-libs-5.5.68-1.el7.x86_64</span><br><span class="line">[root@parak opt]# rpm -e mariadb-libs-5.5.68-1.el7.x86_64</span><br><span class="line">错误：依赖检测失败：</span><br><span class="line">	libmysqlclient.so.18()(64bit) 被 (已安裝) postfix-2:2.10.1-9.el7.x86_64 需要</span><br><span class="line">	libmysqlclient.so.18(libmysqlclient_18)(64bit) 被 (已安裝) postfix-2:2.10.1-9.el7.x86_64 需要</span><br><span class="line">[root@parak opt]# rpm -e --nodeps mariadb-libs-5.5.68-1.el7.x86_64</span><br><span class="line">[root@parak opt]# rpm -ivh mysql-community-libs-8.0.20-1.el7.x86_64.rpm </span><br><span class="line">警告：mysql-community-libs-8.0.20-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY</span><br><span class="line">准备中...                          ################################# [100%]</span><br><span class="line">正在升级/安装...</span><br><span class="line">   1:mysql-community-libs-8.0.20-1.el7################################# [100%]</span><br><span class="line">[root@parak opt]# rpm -ivh mysql-community-client-8.0.20-1.el7.x86_64.rpm </span><br><span class="line">警告：mysql-community-client-8.0.20-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY</span><br><span class="line">准备中...                          ################################# [100%]</span><br><span class="line">正在升级/安装...</span><br><span class="line">   1:mysql-community-client-8.0.20-1.e################################# [100%]</span><br><span class="line">[root@parak opt]# rpm -ivh mysql-community-server-8.0.20-1.el7.x86_64.rpm </span><br><span class="line">警告：mysql-community-server-8.0.20-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY</span><br><span class="line">准备中...                          ################################# [100%]</span><br><span class="line">正在升级/安装...</span><br><span class="line">   1:mysql-community-server-8.0.20-1.e################################# [100%]</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>查看是否安装成功</p>
+</blockquote>
+<ul>
+<li>方式一：查看mysql版本号<code>mysqladmin --version</code></li>
+<li>方式二：查看是否创建了mysql用户(组)<code>cat /etc/passwd | grep mysql</code></li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@parak opt]# mysqladmin --version</span><br><span class="line">mysqladmin  Ver 8.0.20 for Linux on x86_64 (MySQL Community Server - GPL)</span><br><span class="line">[root@parak opt]# cat /etc/passwd | grep mysql</span><br><span class="line">mysql:x:27:27:MySQL Server:/var/lib/mysql:/bin/false</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>启动MySQL服务</p>
+</blockquote>
+<ul>
+<li>启动MySQL：<code>systemctl start mysqld</code></li>
+<li>停止MySQL：<code>systemctl stop mysqld</code></li>
+</ul>
+<blockquote>
+<p>登录MySQL</p>
+</blockquote>
+<p>两种方式：</p>
+<ul>
+<li>方式一：查看MySQL初始密码<code> cat /var/log/mysqld.log | grep password</code></li>
+<li>方式二：修改<code>my.cnf</code>配置文件用于跳过密码，在<code>[mysqld]</code>下添加<code> skip-grant-tables</code></li>
+</ul>
+<p>推荐使用第一种，因为在MySQL8在跳过登录的状态下是不允许修改登录密码的。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">登录mysql</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mysql -uroot -p</span></span><br><span class="line">Enter password:</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">修改校验密码策略等级</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mysql&gt; <span class="built_in">set</span> global validate_password.policy=LOW;</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">设置密码最小长度</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mysql&gt; <span class="built_in">set</span> global validate_password.length=1;</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">最后设置密码</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ALTER USER <span class="string">&#x27;root&#x27;</span>@<span class="string">&#x27;localhost&#x27;</span> IDENTIFIED BY &lt;password&gt;;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>Navicat连接产生问题</p>
+</blockquote>
+<p>（1）HOST <IP> is not allowed to connect to this mysql server</p>
+<p>解决：关闭防火墙，更新可连接IP</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查看防火墙状态</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl status firewalld.service</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">关闭防火墙</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl stop firewalld.service</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">禁止自启动</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl <span class="built_in">disable</span> firewalld.service</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">让所有IP都可以连接MySQL</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mysql&gt; update user <span class="built_in">set</span> host=<span class="string">&#x27;%&#x27;</span> <span class="built_in">where</span> user=<span class="string">&#x27;root&#x27;</span>;</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">刷新权限</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mysql&gt; flush privileges;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>（2）Client does not support authentication protocol requested by server</p>
+<p>解决：更改加密规则，更新用户密码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="comment">#更改加密方式</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mysql&gt; ALTER USER <span class="string">&#x27;root&#x27;</span>@<span class="string">&#x27;localhost&#x27;</span> IDENTIFIED BY <span class="string">&#x27;password&#x27;</span> PASSWORD EXPIRE NEVER;</span> </span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">更新用户密码</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mysql&gt; ALTER USER <span class="string">&#x27;root&#x27;</span>@<span class="string">&#x27;localhost&#x27;</span> IDENTIFIED WITH mysql_native_password BY <span class="string">&#x27;&lt;password&gt;&#x27;</span>;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>设置开机自启动</p>
+</blockquote>
+<p>按照以上安装方式mysql服务是默认开机自启动的，可以通过<code>systemctl list-unit-files </code>查看开机启动项</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@parak mysql]# systemctl list-unit-files | grep mysql</span><br><span class="line">mysqld.service                                enabled </span><br><span class="line">mysqld@.service                               disabled</span><br></pre></td></tr></table></figure>
+
+<p>如果不是开机自启动，可以通过<code>ntsysv</code>启用服务，<code>[]</code>中设置<code>*</code>即可使其开机自启动：</p>
+<ul>
+<li>上下键：可以在中间的方框当中，在各个服务之间移动</li>
+<li>空格键：可以用来选择你所需要的服务，[*]表示开起启动</li>
+<li>tab键：可以在方框、OK、Cancel之间移动</li>
+<li>F1键：可以显示该服务的说明</li>
+</ul>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314131906998.png" class="" title="image-20210314131906998"><br />
+
+
+
+<h3 id="Docker安装"><a href="#Docker安装" class="headerlink" title="Docker安装"></a>Docker安装</h3><blockquote>
+<p>拉取镜像</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker pull mysql:8.0.20</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>创建挂载的数据和配置文件夹</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> -p /home/mysql/data /home/mysql/conf</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>先启动MySQL容器</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run --name mysql -d -p 3306:3306 \</span></span><br><span class="line"><span class="language-bash">-e MYSQL_ROOT_PASSWORD=&lt;password&gt; mysql:8.0.20</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>进入容器查看配置文件位置</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker <span class="built_in">exec</span> -it mysql bash</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mysql --<span class="built_in">help</span> | grep my.cnf</span></span><br><span class="line">                      order of preference, my.cnf, $MYSQL_TCP_PORT,</span><br><span class="line">/etc/my.cnf /etc/mysql/my.cnf ~/.my.cnf </span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">exit</span></span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>将配置文件复制到挂载配置文件夹</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker <span class="built_in">cp</span> mysql:/etc/mysql/my.cnf /home/mysql/conf</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>在配置文件中添加</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">表名称大小写不敏感</span></span><br><span class="line">lower_case_table_names=1</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>先停止并删除容器</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker stop mysql &amp;&amp; docker <span class="built_in">rm</span> mysql</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>重新运行MySQL容器</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run --name mysql \</span></span><br><span class="line"><span class="language-bash">-d -p 3306:3306  \</span></span><br><span class="line"><span class="language-bash">-e MYSQL_ROOT_PASSWORD=&lt;password&gt; \</span></span><br><span class="line"><span class="language-bash">--mount <span class="built_in">type</span>=<span class="built_in">bind</span>,src=/home/mysql/conf/my.cnf,dst=/etc/mysql/my.cnf \</span></span><br><span class="line"><span class="language-bash">--mount <span class="built_in">type</span>=<span class="built_in">bind</span>,src=/home/mysql/data,dst=/var/lib/mysql \</span></span><br><span class="line"><span class="language-bash">--restart=on-failure:3 \</span></span><br><span class="line"><span class="language-bash"> mysql:8.0.20</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>Navicat无法连接</p>
+</blockquote>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ docker <span class="built_in">exec</span> -it mysql bash</span><br><span class="line">$ mysql -u root -p&lt;password&gt;</span><br><span class="line">$ ALTER USER <span class="string">&#x27;root&#x27;</span>@<span class="string">&#x27;%&#x27;</span> IDENTIFIED WITH mysql_native_password BY <span class="string">&#x27;&lt;password&gt;&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h3><blockquote>
+<p>安装目录</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th align="center">路径</th>
+<th align="center">解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">/var/lib/mysql/</td>
+<td align="center">数据库文件的存放位置</td>
+</tr>
+<tr>
+<td align="center">/usr/share/mysql-8.0/</td>
+<td align="center">配置文件目录</td>
+</tr>
+<tr>
+<td align="center">/usr/bin/</td>
+<td align="center">相关命令目录</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>查看编码</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">mysql&gt; </span><span class="language-bash">show variables like <span class="string">&#x27;character%&#x27;</span>;</span></span><br><span class="line">+--------------------------+--------------------------------+</span><br><span class="line">| Variable_name            | Value                          |</span><br><span class="line">+--------------------------+--------------------------------+</span><br><span class="line">| character_set_client     | utf8mb4                        |</span><br><span class="line">| character_set_connection | utf8mb4                        |</span><br><span class="line">| character_set_database   | utf8mb4                        |</span><br><span class="line">| character_set_filesystem | binary                         |</span><br><span class="line">| character_set_results    | utf8mb4                        |</span><br><span class="line">| character_set_server     | utf8mb4                        |</span><br><span class="line">| character_set_system     | utf8                           |</span><br><span class="line">| character_sets_dir       | /usr/share/mysql-8.0/charsets/ |</span><br><span class="line">+--------------------------+--------------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，MySQL 8的默认编码格式除了文件系统是二进制编码以外，已经全部改为utf8和utf8mb4(拥有比utf8更好的兼容性)，因此我们不需要再修改。</p>
+<p>注意：使用Navicat连接MySQL时编码应设置为自动，切勿设置为utf8，否则会中文乱码。</p>
+<h3 id="逻辑架构"><a href="#逻辑架构" class="headerlink" title="逻辑架构"></a>逻辑架构</h3><blockquote>
+<p>优势</p>
+</blockquote>
+<p>和其他数据库相比，MySQL有点与众不同，它的架构可以在多种不同场景中应用并发挥良好作用和。主要体现在存储引擎的架构上，插件式的存储引擎架构将查询处理和其他的系统任务以及数据的存储提取相分离。这种架构可以根据业务的需求和实际需要选择合适的存储引擎。</p>
+<blockquote>
+<p>图示</p>
+</blockquote>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210324110838854.png" class="" title="image-20210324110838854"><br />
+
+
+
+<blockquote>
+<p>详解</p>
+</blockquote>
+<ul>
+<li>连接层：最上层是一些客户端和连接服务，包含本地sock通信和大多数基于客户端/服务端工具实现的类似于TCP/IP通信。主要完成一些类似于连接处理、授权认证及相关的安全方案。在该层上引入了线程池的概念，未通过认证安全接入的客户端提供线程。同样在该层上可以实现基于SSL的安全连接。服务器也会为安全接入的每个客户端验证它所具有的操作权限。</li>
+<li>服务层：第二层架构主要完成大多数的核心功能，如SQL接口，并完成缓存的查询，SQL的分析和优化及部分内置函数的执行。所有跨存储引擎的功能也在这一层实现，如过程、函数等。在该层，服务器会解析查询并创建相应的内部解析树，并对其完成相应的优化如确定查询表的顺序，是否利用索引等，最后生成相应的执行操作。如果是select语句，服务器还会查询内部的缓存。如果缓存空间足够大，这样在解决大量读操作的环境中能够很好的提升系统的性能。</li>
+<li>引擎层：存储引擎层，存储引擎真正的负责了MySQL中数据的存储和提取，服务器通过API与存储引擎进行通信。不同的存储引擎具有的功能不同，这样我们可以根据自己的实际需要进行选取。</li>
+<li>存储层：数据存储层，主要是将数据存储在运行于裸设备的文件系统之上，并完成与存储引擎的交互。</li>
+</ul>
+<h3 id="存储引擎"><a href="#存储引擎" class="headerlink" title="存储引擎"></a>存储引擎</h3><blockquote>
+<p>查看存储引擎</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mysql&gt;show engines;</span></span><br></pre></td></tr></table></figure>
+
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314164337734.png" class="" title="image-20210314164337734"><br />
+
+
+
+<blockquote>
+<p>MyISAM和InnoDB</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th align="center">对比项</th>
+<th align="center">MyISAM</th>
+<th align="center">InnoDB</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">主外键</td>
+<td align="center">不支持</td>
+<td align="center">支持</td>
+</tr>
+<tr>
+<td align="center">事务</td>
+<td align="center">不支持</td>
+<td align="center">支持</td>
+</tr>
+<tr>
+<td align="center">行表锁</td>
+<td align="center">表锁，即使操作一条记录也会锁住整个表，不合适高并发的操作</td>
+<td align="center">行锁，操作时只锁住某一行，不对其他行有影响，适合高并发的操作</td>
+</tr>
+<tr>
+<td align="center">缓存</td>
+<td align="center">只缓存索引，不缓存真实数据</td>
+<td align="center">不仅缓存索引还要缓存真实数据，对内存要求较高，而且内存大小对性能有决定性的影响。</td>
+</tr>
+<tr>
+<td align="center">表空间</td>
+<td align="center">小</td>
+<td align="center">大</td>
+</tr>
+<tr>
+<td align="center">关注点</td>
+<td align="center">性能</td>
+<td align="center">事务</td>
+</tr>
+<tr>
+<td align="center">默认安装</td>
+<td align="center">Y</td>
+<td align="center">Y</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>说明</p>
+</blockquote>
+<p>MySQL 8.0：不再支持查询缓存。</p>
+<p>MySQL团队博客：<a target="_blank" rel="noopener" href="https://mysqlserverteam.com/mysql-8-0-retiring-support-for-the-query-cache/">https://mysqlserverteam.com/mysql-8-0-retiring-support-for-the-query-cache/</a></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">尽管MySQL Query Cache旨在提高性能，但它存在严重的可伸缩性问题，并且很容易成为严重的瓶颈。</span><br><span class="line"></span><br><span class="line">自MySQL 5.6（2013）以来，默认情况下已禁用查询缓存，因为众所周知，它不能与多核计算机上在高吞吐量工作负载情况下进行扩展。</span><br><span class="line"></span><br><span class="line">我们考虑了可以对查询缓存进行哪些改进，以及我们可以进行的优化，这些优化可以改善所有工作负载。</span><br><span class="line"></span><br><span class="line">虽然这些选择本身是正交的，但工程资源是有限的。也就是说，我们正在转变战略，投资于更普遍适用于所有工作负载的改进。</span><br><span class="line"></span><br><span class="line">建议把缓存放到客户端。</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>Alibaba选择</p>
+</blockquote>
+<ul>
+<li>Percona为MySQL数据库服务进行了改进，在功能和性能上较MySQL有着很显著的提升。该版本提升了在高负载情况下的InnoDB的性能、为DBA提供了一些非常有用的性能诊断工具；另外有更多的参数和命令来控制服务器行为。</li>
+<li>阿里巴巴大部分MySQL数据库其实使用的时percona的原型加以修改。阿里新建了一款存储引擎叫xtradb完全可以替代innodb，并且在性能和并发上做得更好。</li>
+</ul>
+<h2 id="索引优化"><a href="#索引优化" class="headerlink" title="索引优化"></a>索引优化</h2><h3 id="索引简介"><a href="#索引简介" class="headerlink" title="索引简介"></a>索引简介</h3><blockquote>
+<p>定义</p>
+</blockquote>
+<p>MySQL官方对索引的定义为：索引是帮助MySQL高效获取数据的数据结构。</p>
+<p>可以得到索引的本质：索引是数据结构。</p>
+<p>简单理解：排好序的快速查找数据结构。</p>
+<p>一般来说索引本身也很大，不可能全部存储在内存中，因此索引往往以索引文件的形式存储在磁盘上。</p>
+<p>我们平常所说的索引，如果没有特别指明，都是指B树（多路搜索树，不一定是二叉树）结构的索引。</p>
+<p>其中聚集索引，次要索引，复合索引，前缀索引，唯一索引默认都是使用B+树索引，统称索引。除了B+树这种类型的索引之外，还有哈希索引等。</p>
+<blockquote>
+<p>优势</p>
+</blockquote>
+<p>类似于大学图书馆建数目索引，提高数据检索的效率，降低数据库的IO成本。</p>
+<p>通过索引列队数据进行排序，降低数据排序的成本，降低了CPU的消耗。</p>
+<blockquote>
+<p>劣势</p>
+</blockquote>
+<p>虽然索引大大提高了查询速度，同时会降低表的更新速度，如对表进行INSERT、UPDATE和DELETE。因为更新表时，MySQL不仅要保存数据，还要保存一下索引文件每次更新添加了索引列的字段，都会调整因为更新所带来的键值变化后的索引信息。</p>
+<p>索引只是提高效率的一个因素，如果你的MySQL有大数据量的表，就需要花时间研究建立最优秀的索引，或优化查询。</p>
+<h3 id="索引分类"><a href="#索引分类" class="headerlink" title="索引分类"></a>索引分类</h3><blockquote>
+<p>单值索引</p>
+</blockquote>
+<p>一个索引列只包含单个列，一个表可以有多个索引。</p>
+<blockquote>
+<p>唯一索引</p>
+</blockquote>
+<p>索引列的值必须唯一，但允许有空值。</p>
+<blockquote>
+<p>复合索引</p>
+</blockquote>
+<p>一个索引包含多个列。</p>
+<blockquote>
+<p>覆盖索引</p>
+</blockquote>
+<p>SQL只需要通过索引就可以返回查询所需要的数据，而不必通过二级索引查到主键之后再去查询数据，即查询字段为索引字段。</p>
+<blockquote>
+<p>基本语法</p>
+</blockquote>
+<ul>
+<li>创建</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">CREATE [UNIQUE] INDEX &lt;index_name&gt; ON &lt;table_name&gt;(&lt;column_name&gt;(length));</span><br><span class="line">ALTER &lt;table_name&gt; ADD [UNIQUE] INDEX &lt;index_name&gt; ON (&lt;column_name&gt;(length));</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>删除</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DROP INDEX &lt;index_name&gt; ON &lt;table_name&gt;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SHOW</span> INDEX <span class="keyword">FROM</span> <span class="operator">&lt;</span>table_name<span class="operator">&gt;</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>ALTER</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">-- 添加主键，即唯一索引</span><br><span class="line">ALTER TABLE &lt;table_name&gt; PRIMARY KEY (column_list);</span><br><span class="line">-- 创建唯一索引</span><br><span class="line">ALTER TABLE &lt;table_name&gt; UNIQUE &lt;index_name&gt;(column_list);</span><br><span class="line">-- 添加普通索引</span><br><span class="line">ALTER TABLE &lt;table_name&gt; INDEX &lt;index_name&gt;(column_list);</span><br><span class="line">-- 指定全文索引</span><br><span class="line">ALTER TABLE &lt;table_name&gt; FULLTEXT index_name&gt;(column_list);</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="索引结构"><a href="#索引结构" class="headerlink" title="索引结构"></a>索引结构</h3><blockquote>
+<p>索引</p>
+</blockquote>
+<ul>
+<li>BTREE </li>
+<li>HASH</li>
+<li>FULL-TEXT</li>
+<li>R-TREE</li>
+</ul>
+<blockquote>
+<p>需要建立索引的情况</p>
+</blockquote>
+<ul>
+<li>主键自动建立唯一索引</li>
+<li>频繁作为查询条件的字段应该创建索引</li>
+<li>查询中与其它表关联的字段，外键关系建立索引</li>
+<li>频繁更新的字段不适合创建索引</li>
+<li>Where条件里用不到的字段不创建索引</li>
+<li>单值/组合索引的选择，在高并发下倾向创建组合索引</li>
+<li>查询中排序的字段，排序字段若通过索引去访问将大大提高排序速度</li>
+<li>查询中统计或者分组字段</li>
+</ul>
+<blockquote>
+<p>不需要建立索引的情况</p>
+</blockquote>
+<ul>
+<li>表记录太少  [原因：低于百万数的表MySQL还是扛得住的。]</li>
+<li>经常增删改的表  [原因：提高了查询速度，同时却会降低更新表的速度，如对表进行INSERT、UPDATE和DELETE。因为更新表时，MySQL不仅要保存数据，还要保存一下索引文件。]</li>
+<li>数据重复且分布均匀的表字段，因此应该只为最经常查询和最经常排序的数据列建立索引。注意，如果某个数据列包含许多重复的内容，为它建立索引就没有太大的实际效果  [例如：性别等字段。]</li>
+</ul>
+<h3 id="Join查询"><a href="#Join查询" class="headerlink" title="Join查询"></a>Join查询</h3><blockquote>
+<p>join说明</p>
+</blockquote>
+<ul>
+<li>LEFT JOIN：返回左表中的所有记录和右表中联结字段相等的记录。<ul>
+<li>格式：<code>SELECT ... table1 LEFT JOIN table2 ON ...</code></li>
+<li>说明：会取得table1全部记录，即使table2没有匹配记录</li>
+</ul>
+</li>
+<li>RIGHT JOIN：返回右表中的所有记录和左表中联结字段相等的记录。<ul>
+<li>格式：<code>SELECT ... table1 RIGHT JOIN table2 ON ...</code></li>
+<li>说明：会取得table2全部记录，即使table1没有匹配记录</li>
+</ul>
+</li>
+<li>INNER JOIN：只返回两个表中联结字段相等的记录。<ul>
+<li>格式：<code>SELECT ... table1 INNER JOIN table2 ON ...</code></li>
+<li>说明：会取得table1table2联结字段相等的记录</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>join图示</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT &lt;select_list&gt; from table_a a LEFT JOIN table_b b ON a.key = b.key</span><br></pre></td></tr></table></figure>
+
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314221223407.png" class="" title="image-20210314221223407"><br />
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT &lt;select_list&gt; from table_a a LEFT JOIN table_b ON a.key == b.key WHERE b.key is NULL</span><br></pre></td></tr></table></figure>
+
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314222433261.png" class="" title="image-20210314222433261"><br />
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT &lt;select_list&gt; from table_a a INNER JOIN table_b b ON a.key = b.key</span><br></pre></td></tr></table></figure>
+
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314221536479.png" class="" title="image-20210314221536479"><br />
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT &lt;select_list&gt; from table_a a RIGHT JOIN table_b b ON a.key = b.key</span><br></pre></td></tr></table></figure>
+
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314221440655.png" class="" title="image-20210314221440655"><br />
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT &lt;select_list&gt; from table_a a RIGHT JOIN table_b ON a.key = b.key WHERE a.key is NULL</span><br></pre></td></tr></table></figure>
+
+
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314222235183.png" class="" title="image-20210314222235183"><br />
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># Oracle支持 FULL OUTER JOIN，但是MySQL不支持</span><br><span class="line"># Oracle</span><br><span class="line">SELECT &lt;select_list&gt; FROM table_a a FULL OUTER JOIN table_b b ON a.key = b.key</span><br><span class="line"># MySQL</span><br><span class="line">SELECT &lt;select_list&gt; from table_a a LEFT JOIN table_b b ON a.key = b.key</span><br><span class="line">union</span><br><span class="line">SELECT &lt;select_list&gt; from table_a a RIGHT JOIN table_b b ON a.key = b.key</span><br></pre></td></tr></table></figure>
+
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314222826674.png" class="" title="image-20210314222826674"><br />
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># Oracle</span><br><span class="line">SELECT &lt;select_list&gt; FROM table_a a FULL OUTER JOIN table_b b ON a.key = b.key WHERE a.key is NULL or b.key is NULL</span><br><span class="line"># MySQL</span><br><span class="line">SELECT &lt;select_list&gt; from table_a a LEFT JOIN table_b b ON a.key = b.key where b.id is null</span><br><span class="line">union</span><br><span class="line">SELECT &lt;select_list&gt; from table_a a RIGHT JOIN table_b b ON a.key = b.key where a.id is null</span><br></pre></td></tr></table></figure>
+
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314222858303.png" class="" title="image-20210314222858303"><br />
+
+
+
+
+
+<blockquote>
+<p>SQL执行顺序</p>
+</blockquote>
+<ul>
+<li>手写</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span></span><br><span class="line">	<span class="operator">&lt;</span>select_list<span class="operator">&gt;</span></span><br><span class="line"><span class="keyword">FROM</span></span><br><span class="line">	<span class="operator">&lt;</span>left_table<span class="operator">&gt;</span> <span class="operator">&lt;</span>join_table<span class="operator">&gt;</span></span><br><span class="line"><span class="keyword">JOIN</span> <span class="operator">&lt;</span>right_table<span class="operator">&gt;</span> <span class="keyword">ON</span> <span class="operator">&lt;</span>join_condetion<span class="operator">&gt;</span></span><br><span class="line"><span class="keyword">WHERE</span></span><br><span class="line">	<span class="operator">&lt;</span>where_condition<span class="operator">&gt;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span></span><br><span class="line">	<span class="operator">&lt;</span>group_by_list<span class="operator">&gt;</span></span><br><span class="line"><span class="keyword">HAVING</span></span><br><span class="line">	<span class="operator">&lt;</span>having_condition<span class="operator">&gt;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span></span><br><span class="line">	<span class="operator">&lt;</span>order_by_condition<span class="operator">&gt;</span></span><br><span class="line">LIMIT <span class="operator">&lt;</span>limit_number<span class="operator">&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>机读</li>
+</ul>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/c24675b4/image-20210314215216629.png" class="" title="image-20210314215216629"><br />
+
+
+
+
+
+<h3 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h3><blockquote>
+<p>MySQL Query Optimizer</p>
+</blockquote>
+<p>MySQL中有专门负责优化SELECT语句的优化器模块，主要功能：通过计算分析系统中收集到的统计信息，为客户端请求的Query提供他认为最优的执行计划(它认为最优的数据检索方式，但不见得是DBA认为是最优的，这部分最耗费时间)<br>当客户端向MySQL请求一条Query，命令解析器模块完成请求分类，区别出是SELECT并转发给MySQL Query Optimizer时，MySQL Query Optimizer 首先会对整条Query进行优化，处理掉一些常量表达式的预算，直接换算成常量值。并对Query 中的查询条件进行简化和转换，如去掉一些无用或显而易见的条件、结构调整等。然后分析Query 中的Hint 信息(如果有)，看显示Hint信息是否可以完全确定该Query的执行计划。如果没有Hint或Hint信息还不足以完全确定执行计划，则会读取所涉及对象的统计信息，根据Query进行写相应的计算分析，然后再得出最后的执行计划。</p>
+<blockquote>
+<p>MySQL性能瓶颈</p>
+</blockquote>
+<p>CPU: CPU在饱和的时候一般发生在数据装入内存或从磁盘上读取数据的时候</p>
+<p>IO: 磁盘I/O瓶颈发生在装入数据远大于内存容量的时候</p>
+<p>服务器硬件的性能瓶颈：<code>top</code>、<code>free</code>、<code>iostat</code>、<code>vmstat</code>来查看系统的性能状态</p>
+<blockquote>
+<p>Explain</p>
+</blockquote>
+<p>官网介绍：<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/explain-output.html">https://dev.mysql.com/doc/refman/8.0/en/explain-output.html</a></p>
+<p>使用目的：</p>
+<ul>
+<li>表的读取顺序</li>
+<li>数据读取操作的操作类型</li>
+<li>可以使用的索引</li>
+<li>实际使用的索引</li>
+<li>表之间的引用</li>
+<li>每张表被优化器查询的行数</li>
+</ul>
+<p>使用方法：<code>explain + sql语句</code></p>
+<blockquote>
+<p>字段解释</p>
+</blockquote>
+<p>（1）id</p>
+<p>解释：</p>
+<p>select查询的序列号，包含一组数字，表示查询中执行的select子句或操作表的顺序。</p>
+<p>说明：</p>
+<ul>
+<li>id相同，执行顺序由上至下；</li>
+<li>id不同，如果是子查询，id递增，id值越大优先级越高，越先被执行；</li>
+<li>id相同不同，同时存在，id如果相同，可以认为是一组，从上往下顺序执行，在所有组中，id值越大，优先级越高。</li>
+</ul>
+<p>（2）select_type</p>
+<p>解释：</p>
+<p>查询的类型：SIMPLE、PRIMARY、SUBQUERY、DERIVED、UNION、UNION RESULT。查询的类型，主要是用于区别普通查询、联合查询、子查询等的复杂查询。</p>
+<p>说明：</p>
+<ul>
+<li>SIMPLE：简单的select查询，查询中不包含子查询或者UNION；</li>
+<li>PRIMARY：查询中若包含任何复杂的子部分，最外层查询责则被标记为PRIMARY；</li>
+<li>SUBQUERY：在SELECT或WHERE列表中包含了子查询；</li>
+<li>DERIVED：在FROM列表中包含的子查询被标记为DERIVED(衍生)，MySQL会递归执行这些子查询，把结果放在临时表里；</li>
+<li>UNION：若第二个SELECT出现在UNION之后，则被标记为UNION；若UNION包含在FROM子句的子查询中，外层SELECT将被被标记为：DERIVED；</li>
+<li>UNION RESULT：从UNION表获取结果的SELECT。</li>
+</ul>
+<p>（3）table</p>
+<p>解释：显示这一行数据是关于哪一张表的。</p>
+<p>（4）type</p>
+<p>解释：显示查询了何种类型。</p>
+<p>说明：</p>
+<p>从最好到最差依次是：<code>system &gt; const &gt; eq_ref &gt; ref &gt; fulltext &gt; ref_or_null &gt; index_merge &gt; unique_subquery &gt; index_subquery &gt; range &gt; index &gt; ALL</code>。</p>
+<p>常见的是：<code>system &gt; const &gt; eq_ref &gt; ref &gt; range &gt; index &gt; ALL</code>。</p>
+<p>一般来说，得保证查询至少达到range级别，最好能到ref。</p>
+<ul>
+<li>system：表只有一行记录（等于系统表），这是const类型的特例，平时不会出现，这个也可以忽略不计。</li>
+<li>const：表示通过索引一次就找到了，const用于比较primary key或者unique索引。因为只匹配一行数据，所以很快。如将主键置于where列表中，MySQL就能将该查询转换为一个常量。</li>
+<li>eq_ref：唯一性索引扫描，对于每个索引键，表中只有一条记录与之匹配。常见于主键或唯一索引扫描。</li>
+<li>ref：非唯一性索引扫描，返回匹配某个单独值的所有行。本质上也是一种索引访问，它返回所有匹配某个单独值的行，然而，它可能会找到多个符合条件的行，所以他应该属于查找和扫描的混合体。</li>
+<li>range：只检索给定范围的行，使用一个索引来选择行。key列显示使用了哪个索引，一般就是在你的where语句中出现了between、&lt;、&gt;、in等的查询这种范围扫描索引会比全表扫描要好，因为它只需要开始于索引的某一点，而结束于另一点，不用扫描全部索引。</li>
+<li>index：Full Index Scan，index与ALL区别为index类型只遍历索引树。这通常比ALL快，因为索引文件通常比数据文件小。（也就是说虽然ALL和index都是全表，但index是从索引出发的，而ALL是从硬盘读取的。）</li>
+<li>ALL：Full Table Scan，将扫描全表以找到匹配的行。</li>
+</ul>
+<p>（5）possible_keys</p>
+<p>解释：</p>
+<p>显示可能应用在这张表中的索引，一个或多个。</p>
+<p>查询涉及到的字段上若存在索引，则该索引将被列出，但不一定被查询实际使用。</p>
+<p>（6）key</p>
+<p>解释：实际使用的索引。如果为NULL，则没有使用索引。查询中若使用了覆盖索引，则该索引仅出现在key列表中。</p>
+<p>（7）key_len</p>
+<p>解释：表示索引中使用的字节数，可通过该列计算查询中使用的索引的长度。在不损失精确性的情况下，长度越短越好。key_len显示的值为索引字段的最大可能长度，并非实际使用长度，即key_len时根据表定义计算而得，不是通过表内检索出的。</p>
+<p>计算：</p>
+<ul>
+<li>字符串 <ul>
+<li>char(n)：n字节长度</li>
+<li>varchar(n)：2字节存储字符串长度，如果是utf-8，则长度 3n + 2</li>
+</ul>
+</li>
+<li>数值类型 <ul>
+<li>tinyint：1字节</li>
+<li>smallint：2字节</li>
+<li>int：4字节</li>
+<li>bigint：8字节　　</li>
+</ul>
+</li>
+<li>时间类型　 <ul>
+<li>date：3字节</li>
+<li>timestamp：4字节</li>
+<li>datetime：8字节</li>
+</ul>
+</li>
+<li>如果字段允许为 NULL，需要1字节记录是否为 NULL</li>
+</ul>
+<p>索引最大长度是768字节，当字符串过长时，mysql会做一个类似左前缀索引的处理，将前半部分的字符提取出来做索引。</p>
+<p>（8）ref</p>
+<p>解释：</p>
+<p>显示索引的哪一列被使用了，如果可能的话，是一个常数。哪些列或常量被用于查找索引列上的值。</p>
+<p>（9）rows</p>
+<p>解释：</p>
+<p>这一列是mysql估计要读取并检测的行数，注意这个不是结果集里的行数。</p>
+<p>（10）extra</p>
+<p>解释：</p>
+<p>包含不适合在其他列中显示但十分重要的额外信息。</p>
+<p>说明：</p>
+<ul>
+<li><code>using index</code>：这发生在对表的请求列都是同一索引的部分的时候，返回的列数据只使用了索引中的信息，而没有再去访问表中的行记录，是性能高的表现。如果同时出现using where，表明索引被用来执行索引键值的查找；如果没有同时出现using where，表明索引用来读取数据而非执行查找动作。</li>
+<li><code>using filesort</code>：MySQL会对结果使用一个外部索引排序，而不是按索引次序从表里读取行。此时MySQL会根据联接类型浏览所有符合条件的记录，并保存排序关键字和行指针，然后排序关键字并按顺序检索行信息。这种情况一般是很危险的，九死一生。</li>
+<li><code>using temporary</code>：MySQL需要创建一张临时表来处理查询，对于查询结果排序时使用临时表，常见于排序order by和分组查询group by。常见于这种情况就更加危险了，十死无生。</li>
+<li><code>using where</code>：使用where过滤。</li>
+<li><code>using join buffer</code>：使用连接缓存。</li>
+<li><code>impossible where</code>：where子句总是false，不能用来获取任何元组。</li>
+<li><code>select tables optimized away</code>：在没有GROUP BY子句的情况下，基于索引优化MIN/MAX或者对于MyISAM存储引擎优化COUNT(*)操作，不必等到执行阶段再进行计算，查询执行计划生成的阶段即完成优化。</li>
+<li><code>distinct</code>：一旦MySQL找到了与行相联合匹配的行，就停止搜索。</li>
+</ul>
+<h3 id="SQL优化"><a href="#SQL优化" class="headerlink" title="SQL优化"></a>SQL优化</h3><blockquote>
+<p>案例1</p>
+</blockquote>
+<p>建表：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE `tb2_article` (</span><br><span class="line">  `id` int NOT NULL AUTO_INCREMENT,</span><br><span class="line">  `author_id` int NOT NULL,</span><br><span class="line">  `category_id` int NOT NULL,</span><br><span class="line">  `views` int NOT NULL,</span><br><span class="line">  `comments` int NOT NULL,</span><br><span class="line">  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,</span><br><span class="line">  `content` text NOT NULL,</span><br><span class="line">  PRIMARY KEY (`id`)</span><br><span class="line">) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;</span><br><span class="line"></span><br><span class="line">INSERT INTO `tb2_article` VALUES (1, 1, 1, 1, 1, &#x27;1&#x27;, &#x27;1&#x27;);</span><br><span class="line">INSERT INTO `tb2_article` VALUES (2, 2, 2, 2, 2, &#x27;2&#x27;, &#x27;2&#x27;);</span><br><span class="line">INSERT INTO `tb2_article` VALUES (3, 3, 3, 3, 3, &#x27;3&#x27;, &#x27;3&#x27;);</span><br></pre></td></tr></table></figure>
+
+<p>第一次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT id, author_id FROM tb2_article WHERE category_id = 1 AND comments &gt; 1 order by views desc limit 1;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-------------+------------+------+---------------+------+---------+------+------+----------+-----------------------------+</span><br><span class="line">| id | select_type | table       | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                       |</span><br><span class="line">+----+-------------+-------------+------------+------+---------------+------+---------+------+------+----------+-----------------------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_article | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    2 |    50.00 | Using where; Using filesort |</span><br><span class="line">+----+-------------+-------------+------------+------+---------------+------+---------+------+------+----------+-----------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>建立索引：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CREATE INDEX idx_article_ccv on tb2_article(category_id,comments, views);</span><br></pre></td></tr></table></figure>
+
+<p>第二次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT id, author_id FROM tb2_article WHERE category_id = 1 AND comments &gt; 1 order by views desc limit 1;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-------------+------------+-------+-----------------+-----------------+---------+------+------+----------+---------------------------------------+</span><br><span class="line">| id | select_type | table       | partitions | type  | possible_keys   | key             | key_len | ref  | rows | filtered | Extra                                 |</span><br><span class="line">+----+-------------+-------------+------------+-------+-----------------+-----------------+---------+------+------+----------+---------------------------------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_article | NULL       | range | idx_article_ccv | idx_article_ccv | 8       | NULL |    1 |   100.00 | Using index condition; Using filesort |</span><br><span class="line">+----+-------------+-------------+------------+-------+-----------------+-----------------+---------+------+------+----------+---------------------------------------+</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>发现key中已经显示了刚刚建立的索引，但是依然使用了文件排序。</p>
+<p>第三次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT id, author_id FROM tb2_article WHERE category_id = 1 AND comments = 1 order by views desc limit 1;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-------------+------------+------+-----------------+-----------------+---------+-------------+------+----------+---------------------+</span><br><span class="line">| id | select_type | table       | partitions | type | possible_keys   | key             | key_len | ref         | rows | filtered | Extra               |</span><br><span class="line">+----+-------------+-------------+------------+------+-----------------+-----------------+---------+-------------+------+----------+---------------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_article | NULL       | ref  | idx_article_ccv | idx_article_ccv | 8       | const,const |    1 |   100.00 | Backward index scan |</span><br><span class="line">+----+-------------+-------------+------------+------+-----------------+-----------------+---------+-------------+------+----------+---------------------+</span><br></pre></td></tr></table></figure>
+
+<p>当把查询条件修改为等于时，发现ref中出现两个常量，即两个查询常量，并且没有使用文件排序。说明当查询条件为大于号时，索引失效。</p>
+<p>浅析第二次加了索引之后explain依然使用<code>filesort</code>：</p>
+<p>按照BTree的工作原理，先排序<code>category_id</code>，如果遇到相同的<code>category_id</code>则再排序<code>comments</code>，如果遇到相同的<code>commnents</code>则再排序<code>views</code>。当<code>comments</code>字段在联合索引里处于中间位置时，因<code>comments &gt; 1</code>条件是一个范围值(range)，MySQL无法利用索引再对后面的views部分进行检索，即range类型查询字段后面的索引无效。</p>
+<p>删除索引：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DROP INDEX idx_article_ccv ON tb2_article;</span><br></pre></td></tr></table></figure>
+
+<p>新建索引：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CREATE INDEX idx_article_cv ON  tb2_article(category_id, views);</span><br></pre></td></tr></table></figure>
+
+<p>再次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT id, author_id FROM tb2_article WHERE category_id = 1 AND comments &gt; 1 order by views desc limit 1;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-------------+------------+------+----------------+----------------+---------+-------+------+----------+----------------------------------+</span><br><span class="line">| id | select_type | table       | partitions | type | possible_keys  | key            | key_len | ref   | rows | filtered | Extra                            |</span><br><span class="line">+----+-------------+-------------+------------+------+----------------+----------------+---------+-------+------+----------+----------------------------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_article | NULL       | ref  | idx_article_cv | idx_article_cv | 4       | const |    1 |    50.00 | Using where; Backward index scan |</span><br><span class="line">+----+-------------+-------------+------------+------+----------------+----------------+---------+-------+------+----------+----------------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>可以看到type变成了<code>ref</code>，Extra中的<code>using filesort</code>也消失了，结果非常理想。</p>
+<p>结论：建立复合索引的时候最好不要带上含有范围查询的字段。</p>
+<blockquote>
+<p>案例2</p>
+</blockquote>
+<p>继续建表：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE `tb2_class` (</span><br><span class="line">  `id` int NOT NULL AUTO_INCREMENT,</span><br><span class="line">  `card` int NOT NULL,</span><br><span class="line">  PRIMARY KEY (`id`)</span><br><span class="line">) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;</span><br><span class="line"></span><br><span class="line">CREATE TABLE `tb2_book` (</span><br><span class="line">  `bookid` int NOT NULL AUTO_INCREMENT,</span><br><span class="line">  `card` int NOT NULL,</span><br><span class="line">  PRIMARY KEY (`bookid`)</span><br><span class="line">) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;</span><br><span class="line"></span><br><span class="line">INSERT INTO tb2_class(card) VALUES(FLOOR(1 + RAND() * 20));</span><br><span class="line">INSERT INTO tb2_book(card) VALUES(FLOOR(1 + RAND() * 20));</span><br></pre></td></tr></table></figure>
+
+<p>第一次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT * FROM tb2_class LEFT JOIN tb2_book on tb2_class.card = tb2_book.card;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+</span><br><span class="line">| id | select_type | table     | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                                      |</span><br><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_class | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    9 |   100.00 | NULL                                       |</span><br><span class="line">|  1 | SIMPLE      | tb2_book  | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    9 |   100.00 | Using where; Using join buffer (hash join) |</span><br><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>可以看到type都为ALL。</p>
+<p>建立右表tb2_book索引：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE tb2_book ADD INDEX(card);</span><br></pre></td></tr></table></figure>
+
+<p>第二次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT * FROM tb2_class LEFT JOIN tb2_book on tb2_class.card = tb2_book.card;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+----------------------------+------+----------+-------------+</span><br><span class="line">| id | select_type | table     | partitions | type | possible_keys | key  | key_len | ref                        | rows | filtered | Extra       |</span><br><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+----------------------------+------+----------+-------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_class | NULL       | ALL  | NULL          | NULL | NULL    | NULL                       |    9 |   100.00 | NULL        |</span><br><span class="line">|  1 | SIMPLE      | tb2_book  | NULL       | ref  | card          | card | 4       | mysql_learn.tb2_class.card |    1 |   100.00 | Using index |</span><br><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+----------------------------+------+----------+-------------+</span><br></pre></td></tr></table></figure>
+
+<p>可以看到tb2_class的type依然是ALL，tb2_book的type优化为ref。</p>
+<p>删除tb2_book的索引：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DROP INDEX card ON tb2_book;</span><br></pre></td></tr></table></figure>
+
+<p>建立左表tb2_class索引：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE tb2_class ADD INDEX(card);</span><br></pre></td></tr></table></figure>
+
+<p>第三次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT * FROM tb2_class LEFT JOIN tb2_book on tb2_class.card = tb2_book.card;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-----------+------------+-------+---------------+------+---------+------+------+----------+--------------------------------------------+</span><br><span class="line">| id | select_type | table     | partitions | type  | possible_keys | key  | key_len | ref  | rows | filtered | Extra                                      |</span><br><span class="line">+----+-------------+-----------+------------+-------+---------------+------+---------+------+------+----------+--------------------------------------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_class | NULL       | index | NULL          | card | 4       | NULL |    9 |   100.00 | Using index                                |</span><br><span class="line">|  1 | SIMPLE      | tb2_book  | NULL       | ALL   | NULL          | NULL | NULL    | NULL |    9 |   100.00 | Using where; Using join buffer (hash join) |</span><br><span class="line">+----+-------------+-----------+------------+-------+---------------+------+---------+------+------+----------+--------------------------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>可以看到tb2_class的type为index，tb2_book的type下降为ALL。</p>
+<p>最后再次建立tb2_book的索引：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE tb2_book ADD INDEX(card);</span><br></pre></td></tr></table></figure>
+
+<p>第四次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT * FROM tb2_class LEFT JOIN tb2_book on tb2_class.card = tb2_book.card;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-----------+------------+-------+---------------+------+---------+----------------------------+------+----------+-------------+</span><br><span class="line">| id | select_type | table     | partitions | type  | possible_keys | key  | key_len | ref                        | rows | filtered | Extra       |</span><br><span class="line">+----+-------------+-----------+------------+-------+---------------+------+---------+----------------------------+------+----------+-------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_class | NULL       | index | NULL          | card | 4       | NULL                       |    9 |   100.00 | Using index |</span><br><span class="line">|  1 | SIMPLE      | tb2_book  | NULL       | ref   | card          | card | 4       | mysql_learn.tb2_class.card |    1 |   100.00 | Using index |</span><br><span class="line">+----+-------------+-----------+------------+-------+---------------+------+---------+----------------------------+------+----------+-------------+</span><br></pre></td></tr></table></figure>
+
+<p>发现type都提升了，index和ref，结果很理想。</p>
+<p>结论：对于JOIN连接查询的两张表最好都在联结字段建立单值索引。</p>
+<blockquote>
+<p>案例3</p>
+</blockquote>
+<p>继续建表：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE `tb2_phone` (</span><br><span class="line">  `phoneid` int NOT NULL AUTO_INCREMENT,</span><br><span class="line">  `card` int DEFAULT NULL,</span><br><span class="line">  PRIMARY KEY (`phoneid`)</span><br><span class="line">) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;</span><br><span class="line"></span><br><span class="line">INSERT INTO tb2_phone(card) VALUES(FLOOR(1 + (RAND()*20)));</span><br></pre></td></tr></table></figure>
+
+<p>第一次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT * FROM tb2_class LEFT JOIN tb2_book ON tb2_class.card = tb2_book.card LEFT JOIN tb2_phone ON tb2_book.card = tb2_phone.card ;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+</span><br><span class="line">| id | select_type | table     | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                                      |</span><br><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_class | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    9 |   100.00 | NULL                                       |</span><br><span class="line">|  1 | SIMPLE      | tb2_book  | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    9 |   100.00 | Using where; Using join buffer (hash join) |</span><br><span class="line">|  1 | SIMPLE      | tb2_phone | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    9 |   100.00 | Using where; Using join buffer (hash join) |</span><br><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>发现三张表的type都是ALL。</p>
+<p>建立tb2_phone和tb2_book的索引：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE tb2_phone INDEX(card);</span><br><span class="line">ALTER TABLE tb2_book ADD INDEX(card);</span><br></pre></td></tr></table></figure>
+
+<p>第二次explain：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN SELECT * FROM tb2_class LEFT JOIN tb2_book ON tb2_class.card = tb2_book.card LEFT JOIN tb2_phone ON tb2_book.card = tb2_phone.card ;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+----------------------------+------+----------+-------------+</span><br><span class="line">| id | select_type | table     | partitions | type | possible_keys | key  | key_len | ref                        | rows | filtered | Extra       |</span><br><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+----------------------------+------+----------+-------------+</span><br><span class="line">|  1 | SIMPLE      | tb2_class | NULL       | ALL  | NULL          | NULL | NULL    | NULL                       |    9 |   100.00 | NULL        |</span><br><span class="line">|  1 | SIMPLE      | tb2_book  | NULL       | ref  | card          | card | 4       | mysql_learn.tb2_class.card |    1 |   100.00 | Using index |</span><br><span class="line">|  1 | SIMPLE      | tb2_phone | NULL       | ref  | card          | card | 5       | mysql_learn.tb2_book.card  |    1 |   100.00 | Using index |</span><br><span class="line">+----+-------------+-----------+------------+------+---------------+------+---------+----------------------------+------+----------+-------------+</span><br></pre></td></tr></table></figure>
+
+<p>发现tb2_phone和tb2_book的type被优化为ref，并且rows也优化的很好。</p>
+<p>结论：</p>
+<ul>
+<li><strong>永远用小结果集驱动大结果集</strong></li>
+<li>尽可能减少Join语句中的NestedLoop的循环总次数</li>
+<li>优先优化NestedLoop的内存循环</li>
+<li>保证Join语句中被驱动表上Join条件字段已经被索引</li>
+<li>当无法保证被驱动表的Join条件字段被索引且内存资源充足的前提下，不要太吝啬JoinBuffer的设置</li>
+</ul>
+<h3 id="索引失效"><a href="#索引失效" class="headerlink" title="索引失效"></a>索引失效</h3><blockquote>
+<p>SQL脚本</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE `tb3_staff` (</span><br><span class="line">  `id` int NOT NULL AUTO_INCREMENT,</span><br><span class="line">  `name` varchar(20) DEFAULT NULL,</span><br><span class="line">  `age` int DEFAULT NULL,</span><br><span class="line">  `pos` varchar(20) DEFAULT NULL,</span><br><span class="line">  `add_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,</span><br><span class="line">  PRIMARY KEY (`id`)</span><br><span class="line">) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;</span><br><span class="line"></span><br><span class="line">INSERT INTO tb3_staff(name, age, pos, add_time) VALUES ( &#x27;KHighness&#x27;, 19, &#x27;manager&#x27;, NOW());</span><br><span class="line">INSERT INTO tb3_staff(name, age, pos, add_time) VALUES ( &#x27;FlowerK&#x27;, 18, &#x27;dev&#x27;, NOW());</span><br><span class="line">INSERT INTO tb3_staff(name, age, pos, add_time) VALUES ( &#x27;UnknownK&#x27;, 17, &#x27;dev&#x27;, NOW());</span><br><span class="line"></span><br><span class="line">ALTER TABLE tb3_staff ADD INDEX id_staff_nameagepos(name, age, pos);</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>生效场景</p>
+</blockquote>
+<ul>
+<li><code>EXPLAIN SELECT * FROM tb3_staff WHERE name = &#39;KHighness&#39;;</code></li>
+<li><code>EXPLAIN SELECT * FROM tb3_staff WHERE name = &#39;KHighness&#39; and age = 19;</code></li>
+<li><code>EXPLAIN SELECT * FROM tb3_staff WHERE name = &#39;KHighness&#39; and age = 19 and pos = &quot;dev&quot;;</code></li>
+</ul>
+<blockquote>
+<p>失效场景</p>
+</blockquote>
+<ul>
+<li><code>EXPLAIN SELECT * FROM tb3_staff WHERE age = 19 and pos = &quot;dev&quot;;</code></li>
+<li> <code>EXPLAIN SELECT * FROM tb3_staff WHERE  pos = &quot;dev&quot;;</code></li>
+</ul>
+<blockquote>
+<p>部分失效</p>
+</blockquote>
+<ul>
+<li><code>EXPLAIN SELECT * FROM tb3_staff WHERE name = &#39;KHighness&#39; and pos = &quot;dev&quot;;</code></li>
+</ul>
+<blockquote>
+<p>总结</p>
+</blockquote>
+<p>1、最理想的情况就是查询字段与索引字段相同</p>
+<p>2、最佳左前缀法则</p>
+<p>3、不在索引列上做任何操作（计算、函数、（自动or手动）类型转换），会导致索引失效而转向全表扫描</p>
+<p>4、存储引擎不能使用索引中范围条件右边的列</p>
+<p>5、尽量使用覆盖索引（只访问索引的查询（索引列和查询列一致）），减少select *</p>
+<p>6、使用不等于(!= 或者 &lt;&gt;)的时候索引失效会导致range（MySQL5中是ALL）</p>
+<p>7、使用is null或者is not null的时候索引失效会导致range（MySQL5中是ALL）</p>
+<p>8、like以通配符开头索引失效会导致ALL，建立覆盖索引可以防止</p>
+<p>9、MySQL5中字符串不加单引号索引失效会导致ALL，MySQL8中直接报错</p>
+<p>10、使用or连接索引失效会导致ALL</p>
+<h3 id="索引面试"><a href="#索引面试" class="headerlink" title="索引面试"></a>索引面试</h3><blockquote>
+<p>SQL语句</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE `tb4_test` (</span><br><span class="line">  `id` int NOT NULL AUTO_INCREMENT,</span><br><span class="line">  `c1` char(10) DEFAULT NULL,</span><br><span class="line">  `c2` char(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,</span><br><span class="line">  `c3` char(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,</span><br><span class="line">  `c4` char(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,</span><br><span class="line">  `c5` char(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,</span><br><span class="line">  PRIMARY KEY (`id`)</span><br><span class="line">) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;</span><br><span class="line"></span><br><span class="line">CREATE INDEX idx_tb4_test_c1234 ON tb4_test(c1, c2, c3, c4);</span><br><span class="line"></span><br><span class="line">INSERT INTO `mysql_learn`.`tb4_test`(`id`, `c1`, `c2`, `c3`, `c4`, `c5`) VALUES (1, &#x27;a1&#x27;, &#x27;a2&#x27;, &#x27;a3&#x27;, &#x27;a4&#x27;, &#x27;a5&#x27;);</span><br><span class="line">INSERT INTO `mysql_learn`.`tb4_test`(`id`, `c1`, `c2`, `c3`, `c4`, `c5`) VALUES (2, &#x27;b1&#x27;, &#x27;b2&#x27;, &#x27;b3&#x27;, &#x27;b4&#x27;, &#x27;b5&#x27;);</span><br><span class="line">INSERT INTO `mysql_learn`.`tb4_test`(`id`, `c1`, `c2`, `c3`, `c4`, `c5`) VALUES (3, &#x27;c1&#x27;, &#x27;c2&#x27;, &#x27;c3&#x27;, &#x27;c4&#x27;, &#x27;c5&#x27;);</span><br><span class="line">INSERT INTO `mysql_learn`.`tb4_test`(`id`, `c1`, `c2`, `c3`, `c4`, `c5`) VALUES (4, &#x27;d1&#x27;, &#x27;d2&#x27;, &#x27;d3&#x27;, &#x27;d4&#x27;, &#x27;d5&#x27;);</span><br><span class="line">INSERT INTO `mysql_learn`.`tb4_test`(`id`, `c1`, `c2`, `c3`, `c4`, `c5`) VALUES (5, &#x27;e1&#x27;, &#x27;e2&#x27;, &#x27;e3&#x27;, &#x27;e4&#x27;, &#x27;e5&#x27;);</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>EXPLAIN测试</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">-- 最好索引如何创建就如何使用，避免让MySQL自己再翻译优化 --</span><br><span class="line"></span><br><span class="line">-- 1. 用到索引c1 c2 c3 c4全字段，全值匹配</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c2 = &#x27;a2&#x27; AND c3 = &#x27;a3&#x27; AND c4 = &#x27;a4&#x27;;</span><br><span class="line"></span><br><span class="line">-- 2. 用到索引c1 c2 c3 c4全字段，查询优化器会优化SQL语句的执行顺序</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c4 = &#x27;a4&#x27; AND c3 = &#x27;a3&#x27; AND c2 = &#x27;a2&#x27; AND c1 = &#x27;a1&#x27;;</span><br><span class="line"></span><br><span class="line">-- 3. 用到索引c1 c2 c3字段，c4字段失效，范围之后全失效</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c2 = &#x27;a2&#x27; AND c3 &gt; &#x27;a3&#x27; AND c4 = &#x27;a4&#x27;;</span><br><span class="line"></span><br><span class="line">-- 4. 用到索引c1 c2 c3 c4全字段，查询优化器会优化SQL语句的执行顺序</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c2 = &#x27;a2&#x27; AND c4 &gt; &#x27;a4&#x27; AND c3 = &#x27;a3&#x27;;</span><br><span class="line"></span><br><span class="line">-- order by排序一定要注意顺序，这个顺序MySQL不会自动优化 --</span><br><span class="line"></span><br><span class="line">-- 5. 用到索引c1 c2 c3字段，c1 c2用于查找，c3用于排序，但是没有统计到key_len中，c4字段失效</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c2 = &#x27;a2&#x27; AND c4 &gt; &#x27;a4&#x27; ORDER BY c3;</span><br><span class="line"></span><br><span class="line">-- 6. 用到索引c1 c2字段，c1 c2用于查找，c4排序产生了Using filesort说明c4失效</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c2 = &#x27;a2&#x27; ORDER BY c4;</span><br><span class="line"></span><br><span class="line">-- 7. 用到索引c1 c2 c3字段，c1用于查找，c2 c3用于排序</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c5 = &#x27;a5&#x27; ORDER BY c2, c3;</span><br><span class="line"></span><br><span class="line">-- 8. 用到索引c1字段，c1用于查找，c3 c2失效，产生了Using filesort</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c5 = &#x27;a5&#x27; ORDER BY c3, c2;</span><br><span class="line"></span><br><span class="line">-- 9. 用到索引c1 c2 c3字段，c1 c2用于查找，c2 c3用于排序</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c2 = &#x27;a2&#x27; AND c5 = &#x27;a5&#x27; ORDER BY c2, c3;</span><br><span class="line"></span><br><span class="line">-- 10. 用到索引c1 c2 c3字段，c1 c2用于查找，c3才用于排序</span><br><span class="line">--     没有产生Using filesort，因为c2查找时已经确定了，排序时c2已经不用排序了</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c2 = &#x27;a2&#x27; AND c5 = &#x27;a5&#x27; ORDER BY c3, c2;</span><br><span class="line"></span><br><span class="line">-- group by虽然是分组，但是分组之前必然排序 --</span><br><span class="line"></span><br><span class="line">-- 11. 用到索引c1 c2 c3字段，c1用于查找，c2 c3用于排序，c4失效</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c4 = &#x27;a4&#x27; GROUP BY c2, c3;</span><br><span class="line"></span><br><span class="line">-- 12. 用到索引c1字段，c1用于查找，c2 c3失效，产生了Using temporary</span><br><span class="line">EXPLAIN SELECT * FROM tb4_test WHERE c1 = &#x27;a1&#x27; AND c4 = &#x27;a4&#x27; GROUP BY c3, c2;</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>总结</p>
+</blockquote>
+<ul>
+<li>定值、范围还是排序，一般order by是给个范围。</li>
+<li>group by基本上都需要进行排序，会有临时表产生。</li>
+<li>like匹配%在字符串最右边会使用使用，%在字符串最左边不会使用。</li>
+</ul>
+<blockquote>
+<p>一般性建议</p>
+</blockquote>
+<ul>
+<li><p>对于单键索引，尽量选择针对当前query过滤性更好的索引。</p>
+</li>
+<li><p>在选择组合索引的时候，当前query中过滤性最好的字段在索引字段顺序中，位置越靠前越好。</p>
+</li>
+<li><p>在选择组合索引的时候，尽量选择可以能够包含当前query中的where子句中更多字段的索引。</p>
+</li>
+<li><p>尽可能通过分析统计信息和调整query的写法来达到选择合适索引的目的。</p>
+</li>
+</ul>
+<blockquote>
+<p>优化口诀</p>
+</blockquote>
+<p>带头大哥不能死，中间兄弟不能断；</p>
+<p>覆盖索引不写星，索引列上少计算；</p>
+<p>不等有时会失效，范围之后全失效；</p>
+<p>LIKE百分写最右，一般SQL少用OR。</p>
+<h2 id="查询截取"><a href="#查询截取" class="headerlink" title="查询截取"></a>查询截取</h2><h3 id="查询优化-1"><a href="#查询优化-1" class="headerlink" title="查询优化-1"></a>查询优化-1</h3><blockquote>
+<p>优化策略</p>
+</blockquote>
+<p>永远小表驱动大表。</p>
+<blockquote>
+<p>IN</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM A WHERE id IN (SELECT id FROM B)</span><br></pre></td></tr></table></figure>
+
+<p>等价于：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">for select id from B</span><br><span class="line">	for select * from A where A.id = B.id</span><br></pre></td></tr></table></figure>
+
+<p>当A表的数据集大于B表的数据集时，用in优先exists。</p>
+<blockquote>
+<p>EXISTS</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM A WHERE EXISTS (SELECT 1 FROM B WHERE B.id = A.id)</span><br></pre></td></tr></table></figure>
+
+<p>等价于</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">for select id from A</span><br><span class="line">	for select * from B = B.id = A.id</span><br></pre></td></tr></table></figure>
+
+<p>当A表的数据集小于B表的数据集时，用exists优先in。</p>
+<h3 id="查询优化-2"><a href="#查询优化-2" class="headerlink" title="查询优化-2"></a>查询优化-2</h3><blockquote>
+<p>优化策略</p>
+</blockquote>
+<p>Order By关键字优化：</p>
+<p>Order By子句，尽量使用Index方式排序，避免使用FileSort方式排序。</p>
+<p>尽可能在索引列上完成排序操作，遵照索引建的最佳左前缀。</p>
+<p>如果不在索引列上，FileSort有两种算法：MySQL就要启动双路排序和单路排序。</p>
+<blockquote>
+<p>案例</p>
+</blockquote>
+<p>SQL脚本：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE `tb5_a` (</span><br><span class="line">  `age` int NOT NULL,</span><br><span class="line">  `birth` timestamp NOT NULL</span><br><span class="line">) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;</span><br><span class="line"></span><br><span class="line">INSERT INTO tb5_a(age, birth) VALUES(17, NOW());</span><br><span class="line">INSERT INTO tb5_a(age, birth) VALUES(18, NOW());</span><br><span class="line">INSERT INTO tb5_a(age, birth) VALUES(19, NOW());</span><br><span class="line"></span><br><span class="line">CREATE INDEX idx_a_agebirth ON tb5_a(age, birth);</span><br></pre></td></tr></table></figure>
+
+<p>八个case：</p>
+<ul>
+<li><code>EXPLAIN SELECT * FROM tb5_a WHERE age &gt; 20 ORDER BY age;</code> =&gt; 正常</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a WHERE age &gt; 20 ORDER BY birth;</code> =&gt; using filesort</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a WHERE age &gt; 20 ORDER BY age, birth;</code> =&gt; 正常</li>
+<li><code> EXPLAIN SELECT * FROM tb5_a WHERE age &gt; 20 ORDER BY birth，age;</code> =&gt; using filesprt</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a WHERE birth &gt; &#39;2020-3:23 00:00:00&#39; ORDER BY age;</code> =&gt; 正常</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a WHERE birth &gt; &#39;2020-3:23 00:00:00&#39; ORDER BY birth;</code> =&gt; using filesort</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a WHERE birth &gt; &#39;2020-3:23 00:00:00&#39; ORDER BY age,birth;</code> =&gt; 正常</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a WHERE birth &gt; &#39;2020-3:23 00:00:00&#39; ORDER BY birth,age;</code> =&gt; using filesort</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a ORDER BY age ASC,birth ASC;</code> =&gt; 正常</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a ORDER BY age DESC,birth DESC;</code> =&gt; 正常</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a ORDER BY age ASC,birth DESC;</code> =&gt; using filesort</li>
+<li><code>EXPLAIN SELECT * FROM tb5_a ORDER BY age DESC,birth ASC;</code> =&gt; using filesort</li>
+</ul>
+<blockquote>
+<p>总结</p>
+</blockquote>
+<p>总结：Order By满足两种情况，会使用Index方式排序：</p>
+<ul>
+<li>Order By语句使用索引最左前列</li>
+<li>使用Where子句与Order By子句条件列组合满足索引最左前列</li>
+</ul>
+<p>注意：如果不在索引列上，filesort有两种算法：</p>
+<ul>
+<li>双路排序：两次扫描磁盘获取数据，读取行指针和order by列，对它们进行排序，然后扫描已经排序号的列表，按照列表中的值重新从列表中读取对应的数据输出。</li>
+<li>单路排序：从磁盘读取查询需要的所有列，按照order by列在buffer对它们进行排序，然后扫描排序后的列表进行输出，它的效率更快一些，避免了第二次读取数据。并且把随机IO变成了顺序IO，但是它会使用更多的空间，因为它把每一行都保存在内存中了。</li>
+<li>单路问题：在单路排序中，要占用很多空间，因为需要把所有字段都取出，所以有可能取出的数据的总大小超出了sort_buffer的容量，导致每次只能取sort_buffer容量大小的数据，进行排序（创建tmp文件，多路合并），排完再取sort_buffer容量大小，再排，从而导致多次I/O。</li>
+<li>优化策略：SQL服务器参数调优，增大sort_buffer_size参数的设置，增大max_length_for_sort_data参数的设置。</li>
+</ul>
+<p>提高Order By的速度：</p>
+<p>（1）Order By时select *是一个大忌，只查询需要字段，这点非常重要。</p>
+<p>（2）尝试提高sort_buffer_size。</p>
+<p>（3）尝试提高max_length_for_sort_data。</p>
+<blockquote>
+<p>排序案例</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">index a_b_c(a, b, c);</span><br><span class="line"></span><br><span class="line">-- 使用索引最左前缀</span><br><span class="line">ORDER BY a</span><br><span class="line">ORDER BY a, b</span><br><span class="line">ORDER BY a, b, c</span><br><span class="line">ORDER BY a DESC, b DESC, c DESC</span><br><span class="line"></span><br><span class="line">-- WHERE使用索引的最左前缀定义为常量</span><br><span class="line">WHERE a = const ORDER BY b, c</span><br><span class="line">WHERE a = const AND b = const ORDER BY c</span><br><span class="line">WHERE a = const ORDER BY b, c</span><br><span class="line">WHERE a = count AND b &gt; const ORDER BY b, c</span><br><span class="line"></span><br><span class="line">-- 不能使用户索引进行排序</span><br><span class="line">ORDER BY a ASC, b DESC, c DESC  -- 排序不一致</span><br><span class="line">WHERE g = const ORDER BY b, c   -- 丢失a索引</span><br><span class="line">WHERE a = const ORDER BY  c     -- 丢失b索引</span><br><span class="line">WHERE a = const ORDER BY a, d   -- d不是索引的一部分</span><br><span class="line">WHERE a IN (...) ORDER BY b, c  -- 对于排序来说，多个相等条件也是范围查询</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="查询优化-3"><a href="#查询优化-3" class="headerlink" title="查询优化-3"></a>查询优化-3</h3><blockquote>
+<p>优化策略</p>
+</blockquote>
+<p>Group By关键字优化：</p>
+<p>优化策略与Order By相似。</p>
+<p>Group By实质是先排序后进行分组，遵照索引建的最佳左前缀。</p>
+<p>当无法使用索引列，增大max_length_for_sort_data参数设置，增大sort_buffer_size参数的设置。</p>
+<p>where高于having，能卸载where限定的条件就不要去having限定了。</p>
+<h3 id="慢查询日志"><a href="#慢查询日志" class="headerlink" title="慢查询日志"></a>慢查询日志</h3><blockquote>
+<p>简介</p>
+</blockquote>
+<ul>
+<li><p>MySQL的慢查询日志是MySQL提供的一种日志记录，它用来记录在MySQL中响应时间超过阈值的语句，具体指运行时间超过long_query_time值的SQL，则会被记录到慢查询日志中。</p>
+</li>
+<li><p>具体指运行时间超过long_query_time值的SQL，则会被记录到慢查询日志中。long_query_time的默认值为10，意思是运行10秒以上的语句。</p>
+</li>
+<li><p>默认情况下，MySQL数据库没有开启慢查询日志，需要我们手动来设置这个参数。</p>
+</li>
+<li><p>当然，如果不是调优需要的话，一般不建议启动该参数，因为开启漫长哈讯日志会或多或少带来一定的性能影响。慢查询日志支持将日志记录写入文件。</p>
+</li>
+</ul>
+<blockquote>
+<p>配置</p>
+</blockquote>
+<p>查看是否开启慢查询日志和文件位置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; SHOW VARIABLES LIKE &#x27;%SLOW_QUERY_LOG%&#x27;;</span><br><span class="line">+---------------------+-------------------------------+</span><br><span class="line">| Variable_name       | Value                         |</span><br><span class="line">+---------------------+-------------------------------+</span><br><span class="line">| slow_query_log      | OFF                           |</span><br><span class="line">| slow_query_log_file | /var/lib/mysql/parak-slow.log |</span><br><span class="line">+---------------------+-------------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>开启慢查询日志（只对本次生效，重启后失效）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SET global slow_query_log = 1;</span><br></pre></td></tr></table></figure>
+
+<p>查看慢查询阈值（默认为10s）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; SHOW VARIABLES LIKE &#x27;long_query_time%&#x27;;</span><br><span class="line">+-----------------+-----------+</span><br><span class="line">| Variable_name   | Value     |</span><br><span class="line">+-----------------+-----------+</span><br><span class="line">| long_query_time | 10.000000 |</span><br><span class="line">+-----------------+-----------+</span><br></pre></td></tr></table></figure>
+
+<p>设置慢查询阈值（3s）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SET global long_query_time = 3;</span><br></pre></td></tr></table></figure>
+
+<p>查看慢查询记录数量：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SHOW global STATUS LIKE &#x27;%SLOW_QUERIES%&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p>永久生效需要修改配置文件/etc/my.cnf，需要在[mysqld]下增加或修改参数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">slow_query_log = 1</span><br><span class="line">slow_query_log_file = /var/lib/mysql/&lt;hostname&gt;-slow.log</span><br><span class="line">long_query_time  = &lt;time&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>mysqldumpslow</p>
+</blockquote>
+<p>参数：</p>
+<ul>
+<li>s：表示按照何种方式排序</li>
+<li>c：访问次数</li>
+<li>l：锁定时间</li>
+<li>r：返回记录</li>
+<li>t：查询时间</li>
+<li>al：平均锁定时间</li>
+<li>ar：平均返回记录数量</li>
+<li>at：平均查询时间</li>
+<li>t：返回数据数量</li>
+<li>g：正则匹配，大小写不敏感</li>
+</ul>
+<p>得到返回记录最多的10个SQL：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqldumpslow -s r -t 10 /var/lib/mysql/parak-slow.log</span><br></pre></td></tr></table></figure>
+
+<p>得到访问次数最多的10个SQL：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqldumpslow -s c -t 10 /var/lib/mysql/parak-slow.log</span><br></pre></td></tr></table></figure>
+
+<p>得到按照时间排序的前10条里面含有左连接的查询语句：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqldumpslow -s t -t 10 -g &quot;left join&quot; /var/lib/mysql/parak-slow.log</span><br></pre></td></tr></table></figure>
+
+<p>建议在使用这些命令时结合 | 和 more使用，防止爆屏。</p>
+<h3 id="批量数据脚本"><a href="#批量数据脚本" class="headerlink" title="批量数据脚本"></a>批量数据脚本</h3><blockquote>
+<p>配置</p>
+</blockquote>
+<p>变量<code>log_bin_trust_function_creators</code>：控制是否可以信任存储函数创建者，不会创建写入二进制日志引起不安全事件的存储函数。</p>
+<p>查看是否开启：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; SHOW VARIABLES LIKE &#x27;log_bin_trust_function_creators&#x27;;</span><br><span class="line">+---------------------------------+-------+</span><br><span class="line">| Variable_name                   | Value |</span><br><span class="line">+---------------------------------+-------+</span><br><span class="line">| log_bin_trust_function_creators | OFF   |</span><br><span class="line">+---------------------------------+-------+</span><br></pre></td></tr></table></figure>
+
+<p>开启（暂时性开启，永久性依然是修改my.cnf）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SET global log_bin_trust_function_creators = 1;</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>数据准备</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE `tb6_dept` (</span><br><span class="line">  `id` int NOT NULL AUTO_INCREMENT,</span><br><span class="line">  `deptno` mediumint NOT NULL DEFAULT &#x27;0&#x27;,</span><br><span class="line">  `dname` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,</span><br><span class="line">  `loc` varchar(13) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,</span><br><span class="line">  PRIMARY KEY (`id`)</span><br><span class="line">) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;</span><br><span class="line"></span><br><span class="line">CREATE TABLE `tb6_emp` (</span><br><span class="line">  `id` int NOT NULL AUTO_INCREMENT,</span><br><span class="line">  `empno` mediumint NOT NULL DEFAULT &#x27;0&#x27;,</span><br><span class="line">  `ename` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,</span><br><span class="line">  `job` varchar(9) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,</span><br><span class="line">  `mgr` mediumint NOT NULL DEFAULT &#x27;0&#x27;,</span><br><span class="line">  `hiredate` date NOT NULL,</span><br><span class="line">  `sal` decimal(7,2) NOT NULL,</span><br><span class="line">  `comm` decimal(7,2) DEFAULT NULL,</span><br><span class="line">  `deptno` mediumint NOT NULL DEFAULT &#x27;0&#x27;,</span><br><span class="line">  PRIMARY KEY (`id`)</span><br><span class="line">) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>创建函数</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"># 随机产生字符串</span><br><span class="line">DELIMITER $$</span><br><span class="line">CREATE FUNCTION rand_string(n INT) RETURNS VARCHAR(255)</span><br><span class="line">BEGIN</span><br><span class="line">    DECLARE chars_str VARCHAR(100) DEFAULT &#x27;abcdefghijklmnopqrstuvwsyzABCDEFGHIJKLMNOPQRSTUVWXYZ&#x27;;</span><br><span class="line">    DECLARE return_str VARCHAR(255) DEFAULT &#x27;&#x27;;</span><br><span class="line">    DECLARE i INT DEFAULT 0;</span><br><span class="line">    WHILE i &lt; n DO</span><br><span class="line">    SET return_str = CONCAT(return_str,SUBSTRING(chars_str,FLOOR(1+RAND()*52),1));</span><br><span class="line">    SET i = i + 1;</span><br><span class="line">    END WHILE;</span><br><span class="line">    RETURN return_str;</span><br><span class="line">END $$</span><br><span class="line"></span><br><span class="line"># 随机产生部门编号</span><br><span class="line">DELIMITER $$</span><br><span class="line">CREATE FUNCTION rand_num() RETURNS INT(5)</span><br><span class="line">BEGIN</span><br><span class="line">    DECLARE i INT DEFAULT 0;</span><br><span class="line">    SET i = FLOOR(100 + RAND() * 10);</span><br><span class="line">    RETURN i;</span><br><span class="line">END $$</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>创建存储过程</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"># 向tb6_dept表批量插入</span><br><span class="line">DELIMITER $$</span><br><span class="line">CREATE PROCEDURE insert_dept(IN START INT(10),IN max_num INT(10))</span><br><span class="line">BEGIN</span><br><span class="line">DECLARE i INT DEFAULT 0;</span><br><span class="line">    SET autocommit = 0;</span><br><span class="line">    REPEAT</span><br><span class="line">    SET i = i + 1;</span><br><span class="line">    INSERT INTO dept(deptno,dname,loc) VALUES((START + i),rand_string(10),rand_string(8));</span><br><span class="line">    UNTIL i = max_num</span><br><span class="line">    END REPEAT;</span><br><span class="line">    COMMIT;</span><br><span class="line">END $$</span><br><span class="line"></span><br><span class="line"># 向tb6_emp表批量插入</span><br><span class="line">DELIMITER $$</span><br><span class="line">CREATE PROCEDURE insert_emp(IN START INT(10),IN max_num INT(10))</span><br><span class="line">BEGIN</span><br><span class="line">DECLARE i INT DEFAULT 0;</span><br><span class="line">    SET autocommit = 0;</span><br><span class="line">    REPEAT</span><br><span class="line">    SET i = i + 1;</span><br><span class="line">    INSERT INTO emp(empno,ename,job,mgr,hiredata,sal,comm,deptno) VALUES((START + i),rand_string(6),&#x27;SALESMAN&#x27;,0001,CURDATE(),2000,400,rand_num());</span><br><span class="line">    UNTIL i = max_num</span><br><span class="line">    END REPEAT;</span><br><span class="line">    COMMIT;</span><br><span class="line">END $$</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>批量插入数据</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 向tb6_dept中插入10条数据</span><br><span class="line">DELIMITER ;</span><br><span class="line">CALL insert_dept(100, 10);</span><br><span class="line"></span><br><span class="line"># 向tb6_emp中插入50万条数据</span><br><span class="line">DELIMITER ;</span><br><span class="line">CALL insert_emp(100001, 500000);</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Show-Profile"><a href="#Show-Profile" class="headerlink" title="Show Profile"></a>Show Profile</h3><blockquote>
+<p>概述</p>
+</blockquote>
+<p>MySQL提供的可以用来分析当前会话中语句执行的资源消耗情况，可以用于SQL调优的测量。</p>
+<p>官网：<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/show-profile.html">https://dev.mysql.com/doc/refman/8.0/en/show-profile.html</a></p>
+<p>默认情况下，参数处于关闭状态，并保存最近15次的运行结果。</p>
+<blockquote>
+<p>配置</p>
+</blockquote>
+<p>查看开启状态：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; SHOW VARIABLES LIKE &#x27;profiling&#x27;;</span><br><span class="line">+---------------+-------+</span><br><span class="line">| Variable_name | Value |</span><br><span class="line">+---------------+-------+</span><br><span class="line">| profiling     | OFF   |</span><br><span class="line">+---------------+-------+</span><br></pre></td></tr></table></figure>
+
+<p>开启：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SET global profiling = 1;</span><br></pre></td></tr></table></figure>
+
+<p>MySQL8需要关闭依赖检测，即从sql_mode中移除<code>ONLY_FULL_GROUP_BY</code>：</p>
+<p>查看sql_mode：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; SELECT @@global.sql_mode;</span><br><span class="line">+-----------------------------------------------------------------------------------------------------------------------+</span><br><span class="line">| @@global.sql_mode                                                                                                     |</span><br><span class="line">+-----------------------------------------------------------------------------------------------------------------------+</span><br><span class="line">| ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION |</span><br><span class="line">+-----------------------------------------------------------------------------------------------------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>移除<code>ONLY_FULL_GROUP_BY</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SET global @@sql_mode = `STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION`;</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>相关命令</p>
+</blockquote>
+<p>查看SQL：<code>SHOW PROFILES</code></p>
+<p>诊断SQL：<code>SHOW PROFILE &lt;type ...&gt; FOR QUERY &lt;Query_ID&gt;</code></p>
+<p>可选参数如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">| ALL                -- 显示所有的开销信息</span><br><span class="line">| BLOCK IO           -- 显示块IO相关开销</span><br><span class="line">| CONTEXT SWITCHES   -- 上下文切换相关开销</span><br><span class="line">| CPU                -- 显示CPU相关开销信息</span><br><span class="line">| IPC                -- 显示内存相关开销信息</span><br><span class="line">| MEMORY             -- 显示内存相关开销信息</span><br><span class="line">| PAGE FAULTS        -- 显示页面错误相关开销信息</span><br><span class="line">| SOURCE             -- 显示和Source_function, Source_file, Source_line相关的开销信息</span><br><span class="line">| SWAPS              -- 显示交换次数相关开销的信息</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>日常开发需要注意</p>
+</blockquote>
+<ul>
+<li>converting HEAP to MyISAM 查询结果太大，内存都不够用了王磁盘上搬了</li>
+<li>Creating tmp table 拷贝数据到临时表，用完再删除</li>
+<li>Copying to tmp table on disk 吧内存中临时表复制到磁盘，危险</li>
+<li>locked 死锁</li>
+</ul>
+<h3 id="全局查询日志"><a href="#全局查询日志" class="headerlink" title="全局查询日志"></a>全局查询日志</h3><blockquote>
+<p>永久启用</p>
+</blockquote>
+<p>修改my.cnf，设置如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># 开启</span><br><span class="line">general_log = 1</span><br><span class="line"># 记录日志文件的路径</span><br><span class="line">general_log_file = /&lt;path&gt;/&lt;name&gt;</span><br><span class="line"># 输出格式</span><br><span class="line">log_output = &lt;.extension&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>临时启用</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">set global general_log = 1;</span><br><span class="line">set global log_output = &#x27;TABLE&#x27;;</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>注意</p>
+</blockquote>
+<p>永远不要在生产环境开启这个功能。</p>
+<h2 id="锁机制"><a href="#锁机制" class="headerlink" title="锁机制"></a>锁机制</h2><h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><blockquote>
+<p>前言</p>
+</blockquote>
+<p>锁是计算机协调多个进程或线程并发访问某一资源的机制。</p>
+<p>在数据库中，除传统的计算资源（如CPU、RAM、I/O等）的争用，数据也是一种供许多用户共享的资源。如何保证数据并发访问的一致性、有效性是所有数据库必须解决的一个问题，锁冲突也是影响数据库并发访问性能的一个重要因素。从这个角度来说，锁对数据库而言显得尤其重要，也更加复杂。</p>
+<blockquote>
+<p>分类</p>
+</blockquote>
+<p>从对数据操作的类型分：</p>
+<ul>
+<li>读锁（共享锁）：针对同一份数据，多个读操作可以同时进行而不会相互影响。</li>
+<li>写锁（排他锁）：当前写操作没有完成之前，它会阻断其他写锁和读锁。</li>
+</ul>
+<p>从对数据操作的粒度分：</p>
+<ul>
+<li>行级锁：对当前操作的行加锁。（开销大，加锁慢；会出现死锁；锁定粒度最小，发生锁冲突的概率最低，并发度最高）</li>
+<li>表级锁：对当前操作的表加锁。（开销小，加锁快；不会出现死锁；锁定粒度大，发出锁冲突的概率最高，并发度最低）</li>
+<li>页级锁：介于行级锁和表级锁中间的一种锁。（开销和加锁时间介于表锁和行锁之间，会出现死锁；并发度一般）</li>
+</ul>
+<h3 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h3><blockquote>
+<p>概述</p>
+</blockquote>
+<p>事务是由一组SQL语句组成的逻辑处理单元，事务具有以下4个属性，通常简称为事务的ACID属性。</p>
+<ul>
+<li><p>A(atomicity/原子性)：事务是一个原子操作单元，其对数据的修改，要么全都执行，要么全都不执行。</p>
+</li>
+<li><p>C(consistency/一致性)：在事务开始和完成时，数据都必须保持一致状态。这意味着所有相关的数据规则都必须应用于事务的修改，以保持数据的完整性；事务结束时，所有的内部数据结构（如B树索引或双向链表）也都必须是正确的。</p>
+</li>
+<li><p>I(isolation/隔离性)：数据库系统提供一定的隔离机制，保证事务在不受外部并发操作影响的“独立”环境执行。这意味着事务处理过程中的中间状态对外部是不可见的，反之亦然。</p>
+</li>
+<li><p>D(durability/持久性)：事务完成之后，它对于数据的修改是永久性的，即时出现系统故障也能够保持。</p>
+</li>
+</ul>
+<blockquote>
+<p>并发事务处理带来的问题</p>
+</blockquote>
+<p><strong>更新丢失（Lost Update）</strong></p>
+<p>当两个或多个事务选择同一行，然后基于最初选定的值更新该行时，由于每个事务都不知道其他事务的存在，就会发生丢失更新问题——最后的更新覆盖了由其他事务所做的更新。</p>
+<p>例如，两个程序员修改同一Java文件。每程序员独立地更改其副本，然后保存更改的副本后，这样就覆盖了原始文档。最后保存其更改副本的编辑人员覆盖前一个程序员所做的更改。</p>
+<p>如果一个在一个程序员完成并提交事务之前，另一个程序员不能访问同一文件，则可避免此问题。</p>
+<p><strong>脏读（Dirty Reads）</strong></p>
+<p>一个事务正在对一条记录做修改，在这个事务完成并提交前，这条记录的数据就处于不一致状态；这时，另一个事务也来读取同一条记录，如果不加控制，第二个事务读取了这些“脏”数据，并据此做进一步的处理，就会产生未提交的数据依赖关系。这种现象被形象地叫做“脏读”。</p>
+<p>事务A读取到事务B已修改但未提交的数据，还在这个数据基础上做了操作。此时，如果B事务回滚，A读取的数据无效，不符合一致性要求。</p>
+<p><strong>不可重复读（Non-Repeatable Reads）</strong></p>
+<p>一个事务在服务某些数据后的某个时间，再次读取以前读过的数据，却发现其读出的数据已经发生了改变、或某些记录已经被删除，这种现象就叫做不可重复读。</p>
+<p>事务A读取到了事务B已经提交的修改数据，不符合隔离性。</p>
+<p><strong>幻读（Phantom Reads）</strong></p>
+<p>一个事务按相同的查询条件重新读取以前检索过的数据，却发现其他事务插入了满足其查询条件的新数据，这种现象就称为“幻读”。</p>
+<p>事务A读取到事务B提交的新增数据，不符合隔离性。</p>
+<blockquote>
+<p>事务隔离级别</p>
+</blockquote>
+<p>“脏读”、“不可重复读”和“幻读”，其实都是数据库读一致性问题，必须由数据库提供一定的书屋隔离级别来解决。</p>
+<p>数据库实现事务隔离的方式，基本上可分为以下两种：</p>
+<ul>
+<li>一种是在读取数据前，对其加锁，阻止其他事物对数据修改。</li>
+<li>另一种是不用加任何锁，通过一定机制生成一个数据请求时间点的一致性数据快照（Snapshot），并用这个快照来提供一定级别（语句级或事务级）的一致性读取。同用户的角度来看，好像是数据库可以提供统一数据的多个版本，因此，这种技术叫数据多版本并发控制（MultiVersion Concurrency Control，简称MVCC或MCC），也经常称为多版本数据库。</li>
+</ul>
+<p>为了解决“隔离”与“并发”的矛盾，ISO/ANSI SQL92定义了4个事务隔离级别，每个级别的隔离程度不同，允许出现的副作用也不同，允许出现的副作用也不同，应用可以根据自己的业务逻辑需求，通过选择不同的隔离级别来平衡“隔离”与“并发”的矛盾。</p>
+<table>
+<thead>
+<tr>
+<th>读数据一致性及允许的并发副作用隔离级别</th>
+<th>读数据一致性</th>
+<th>脏读</th>
+<th>不可重复读</th>
+<th>幻读</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>未提交读（Read uncommitted）</td>
+<td>最低级别，只能保证不读取物理上损坏的数据</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+</tr>
+<tr>
+<td>已提交读（Read committed）</td>
+<td>语句级</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+</tr>
+<tr>
+<td>可重复读（Repeatable read）</td>
+<td>事务级</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+</tr>
+<tr>
+<td>可序列化（Serializable）</td>
+<td>最高级别，事务级</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+</tr>
+</tbody></table>
+<p>数据库的事务隔离越严格，并发副作用越小，但付出的代价也玖越大，因为事务隔离实质上就是使事务在一定程度上“串行化”进行，这显然与“并发”是矛盾的。同时，不同的应用对读一致性和事务隔离程度的要求也是不同的，比如许多应用对“不可重复读”和“幻读”并不敏感，可能更关心数据并发访问的能力。</p>
+<blockquote>
+<p>配置</p>
+</blockquote>
+<p>查看的事务隔离级别（默认为可重复读）：<code>SELECT @@transaction_isolation;</code>  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; SELECT @@transaction_isolation;</span><br><span class="line">+-------------------------+</span><br><span class="line">| @@transaction_isolation |</span><br><span class="line">+-------------------------+</span><br><span class="line">| REPEATABLE-READ         |</span><br><span class="line">+-------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>设置读未提交: <code>SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;</code></p>
+<p>设置读已提交：<code>SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;</code></p>
+<p>设置可重复读：<code>SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;</code></p>
+<p>设置可序列化：<code> SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;</code></p>
+<blockquote>
+<p>SQL命令</p>
+</blockquote>
+<p>事务开始：<code>BEGIN</code> 或者 <code>START TRANSACTION</code></p>
+<p>事务结束：<code>COMMIT</code>或者<code>COMMIT WORK</code></p>
+<p>事务回滚：<code>ROLLBACK</code>或者<code>ROLLBACK WORK</code></p>
+<h3 id="表锁"><a href="#表锁" class="headerlink" title="表锁"></a>表锁</h3><blockquote>
+<p>特点</p>
+</blockquote>
+<p>表锁（偏读）：偏向MyISAM存储引擎，开销小，加锁快；无死锁；锁定粒度大，发生锁冲突的概率最高，并发度最低。</p>
+<blockquote>
+<p>操作</p>
+</blockquote>
+<p>手动增加表锁：<code>LOCK TABLE &lt;tablename_1&gt; read(write),&lt;tablename_1&gt; read(write) ... </code></p>
+<p>查看表上的锁：<code>SHOW OPEN TABLES;</code></p>
+<p>解锁：<code>UNLOCK TABLES;</code></p>
+<blockquote>
+<p>分析</p>
+</blockquote>
+<p>分析表锁定：<code>SHOW STATUS LIKE &#39;table%&#39;;</code></p>
+<p>有两个状态变量记录MySQL内部表级锁定的情况，两个变量说下：</p>
+<p><code>Table_locs_immediate</code>：产生表级锁定的次数，表示可以立即获取锁的查询次数，每立即获取锁值+1;</p>
+<p><code>Table_locks_waited</code>：出现表级锁定争用而发生等待的次数（不能立即获取锁的次数，每等待一次锁值+1），此值高则说明存在着比较严重的表级锁争用情况。</p>
+<p>此外，MyISAM的读写锁调度是写优先，这也是MyISAM不适合做写为主表的引擎，因为写锁后，其他线程不能做任何操作，大量的更新会使查询很难得到锁，从而造成永远阻塞。</p>
+<blockquote>
+<p>总结</p>
+</blockquote>
+<p>当前线程给一个表加上读锁时，当前线程和其他线程都可以读这个表，但是当前线程线程读其他表时会报错，当前线程写该表时会报错，其他线程写该表时会阻塞。</p>
+<p>当前线程给一个表加上写锁时，当前线程可以对该表进行读和写操作，但是当前线程对其他表进行读和写操作时会报错，其他线程对该表进行读和写时会阻塞。</p>
+<p>读锁阻塞写，写锁都阻塞。</p>
+<h3 id="行锁"><a href="#行锁" class="headerlink" title="行锁"></a>行锁</h3><blockquote>
+<p>特点</p>
+</blockquote>
+<p>行锁（偏写）：偏向InnoDB存储引擎，开销大，加锁慢；会出现死锁；锁定粒度最小，发生锁冲突的概率最低，并发度也最高。</p>
+<p>InnoDB与MyISAM的最大不同有两点：一是支持事务；二是采用了行级锁。</p>
+<blockquote>
+<p>InnoDB行锁实现方式</p>
+</blockquote>
+<p>InnoDB行锁是通过索引上的索引项加锁来实现的，这一点MySQL与Oracle不同，后者是通过在数据块中对相应数据行加锁来实现的。InnoDB这种行锁实现特点意味着：只有通过索引条件来检索数据，InnoDB才使用行级锁，否则InnoDB将使用表锁。</p>
+<blockquote>
+<p>总结</p>
+</blockquote>
+<p>当前线程<code>begin</code>以后对一张表进行写操作，其他线程对该表进行写操作时会阻塞。当前线程写操作完毕后仅当前线程可见，其他线程只能读更新之前的数据，只有当前线程<code>commit;</code>之后其他线程才可读更新数据。</p>
+<blockquote>
+<p>间隙锁</p>
+</blockquote>
+<p>当我们用范围条件而不是相等条件检索数据，并请求共享或排他锁时，InnoDB会给符合条件的已有数据记录的索引项加锁；对于键值在条件范围内但并不存在的记录，叫做间隙。</p>
+<p>InnoDB也会对这个间隙加锁，这种锁机制就是所谓的间隙锁。</p>
+<p>危害：因为Query执行过程中通过范围查找的话，它会锁定整个范围内的所有索引键值，即使这个键值并不存在。间隙所有一个比较致命的弱点，就是当锁定一个范围键值之后，即时某些不存在的键值也会被无辜的锁定，而造成在锁定的时候无法插入锁定键值范围内的任何数据。在某些场景下这可能会对性能造成很大的危害。</p>
+<blockquote>
+<p>如何锁定一行</p>
+</blockquote>
+<p><code>SELECT .....FOR UPDATE</code>在锁定某一行后，其他写操作会被阻塞，直到锁定的行被<code>COMMIT</code>。</p>
+<p>结论：</p>
+<p>InnoDB存储引擎由于实现了行级锁定，虽然在锁定机制的实现方面所带来的性能损耗可能比表级锁定会要更高一些，但是在整体并发处理能力方面要远远优于MyISAM的表级锁定的。当系统并发量较高的时候，InnoDB的整体性能和MyISAM相比就会有比较明显的优势了。</p>
+<p>但是，InnoDB的行级锁定同样有其脆弱的一面，当我们使用不当的时候，可能会让InnoDB的整体性能表现不仅不能比MyISAM高，甚至可能更差。</p>
+<blockquote>
+<p>分析行锁定</p>
+</blockquote>
+<p>通过检查InnoDB_row_lock状态变量来分析系统上的行锁的争夺情况：<code>SHOW STATUS LIKE &#39;innodb_row_lock;&#39;</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; SHOW STATUS LIKE &#x27;innodb_row_lock%&#x27;;</span><br><span class="line">+-------------------------------+-------+</span><br><span class="line">| Variable_name                 | Value |</span><br><span class="line">+-------------------------------+-------+</span><br><span class="line">| Innodb_row_lock_current_waits | 0     |</span><br><span class="line">| Innodb_row_lock_time          | 38921 |</span><br><span class="line">| Innodb_row_lock_time_avg      | 9730  |</span><br><span class="line">| Innodb_row_lock_time_max      | 14962 |</span><br><span class="line">| Innodb_row_lock_waits         | 4     |</span><br><span class="line">+-------------------------------+-------+</span><br></pre></td></tr></table></figure>
+
+<p>对各个状态量的说明如下：</p>
+<ul>
+<li><code>Innodb_row_lock_current_waits</code>：当前正在等待锁定的数量</li>
+<li><code>Innodb_row_lock_time</code>：从系统启动到现在锁定总时间长度</li>
+<li><code>Innodb_row_lock_time_avg</code>：每次等待所花平均时间</li>
+<li><code>Innodb_row_lock_time_max</code>：从系统启动到现在等待最长的一次所花的时间</li>
+<li><code>Innodb_row_lock_waits</code>：系统启动后到现在总共等待的次数</li>
+</ul>
+<p>注意waits金额time_avg比较高的，就要分析系统并制定优化方案。</p>
+<blockquote>
+<p>优化建议</p>
+</blockquote>
+<ul>
+<li>尽可能让所有数据检索都通过索引来完成，避免无索引行锁升级为表锁</li>
+<li>合理设计索引，尽量缩小锁的范围</li>
+<li>尽可能减少检索条件，避免间隙锁</li>
+<li>尽量控制事务大小，减少锁定资源量和时间长度</li>
+<li>尽可能低级别事务隔离</li>
+</ul>
+<h3 id="MVCC"><a href="#MVCC" class="headerlink" title="MVCC"></a>MVCC</h3><blockquote>
+<p>说明</p>
+</blockquote>
+<p>MVCC（Multiversion concurrency control ）是一种多版本并发控制机制。</p>
+<blockquote>
+<p>实现</p>
+</blockquote>
+<ul>
+<li>插入：添加隐藏两列，创建版本号(当前事务id)和删除版本号(null)</li>
+<li>查询：需要满足条件，创建版本号 &lt; 当前事务id &lt; 删除版本号</li>
+<li>删除：更新数据的删除版本号为当前事务id</li>
+<li>更新：复制一份数据，先执行删除，再执行插入，就旧数据的删除版本号和新数据的创建版本号都设置为当前事务id</li>
+</ul>
+<h2 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h2><h3 id="复制的基本原则"><a href="#复制的基本原则" class="headerlink" title="复制的基本原则"></a>复制的基本原则</h3><p>MySQL复制过程分为三步：</p>
+<ul>
+<li>Master将改变记录到二进制日志(Binary Log)。这些记录过程叫做二进制日志事件，<code>Binary Log Events</code>；</li>
+<li>Slave将Master的<code>Binary Log Events</code>拷贝到它的中继日志(Replay Log);</li>
+<li>Slave重做中继日志中的事件，将改变应用到自己的数据库中。MySQL复制是异步且串行化的。</li>
+</ul>
+<h3 id="复制的最大问题"><a href="#复制的最大问题" class="headerlink" title="复制的最大问题"></a>复制的最大问题</h3><ul>
+<li>每个Slave只有一个Master。</li>
+<li>每个Slave只能有一个唯一的服务器ID。</li>
+<li>每个Master可以有多个Salve。</li>
+</ul>
+<h3 id="一主一从配置"><a href="#一主一从配置" class="headerlink" title="一主一从配置"></a>一主一从配置</h3><blockquote>
+<p>基本准备</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">[root@parak home]# mkdir -p mysql-3307/conf mysql-3307/data mysql-3308/conf mysql-3308/data</span><br><span class="line">[root@parak home]# touch mysql-3307/conf/my.cnf mysql-3308/conf/my.cnf</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Master配置文件</span></span><br><span class="line">[root@parak home]# vi mysql-3307/conf/my.cnf</span><br><span class="line">[mysqld]</span><br><span class="line">datadir = /var/lib/mysql</span><br><span class="line">server-id = 1</span><br><span class="line">log-bin = mysql-bin</span><br><span class="line">sql_mode=STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Slave配置文件</span></span><br><span class="line">[root@parak home]# vi mysql-3308/conf/my.cnf</span><br><span class="line">[mysqld]</span><br><span class="line">datadir = /var/lib/mysql</span><br><span class="line">server-id = 2</span><br><span class="line">log-bin = mysql-bin</span><br><span class="line">sql_mode=STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>Docker启动</p>
+</blockquote>
+<p>mysql-3307用作Master</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker run -d \</span><br><span class="line">-v /home/mysql-3307/conf/my.cnf:/etc/my.cnf \</span><br><span class="line">-v /home/mysql-3307/data:/var/lib/mysql \</span><br><span class="line">-p 3307:3306 \</span><br><span class="line">-e MYSQL_ROOT_PASSWORD=KAG1823 \</span><br><span class="line">--restart=always \</span><br><span class="line">--name mysql-3307 \</span><br><span class="line">mysql:8.0.20</span><br></pre></td></tr></table></figure>
+
+<p>mysql-3308用作Slave</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker run -d \</span><br><span class="line">-v /home/mysql-3308/conf/my.cnf:/etc/my.cnf \</span><br><span class="line">-v /home/mysql-3308/data:/var/lib/mysql \</span><br><span class="line">-p 3308:3306 \</span><br><span class="line">-e MYSQL_ROOT_PASSWORD=KAG1823 \</span><br><span class="line">--restart=always \</span><br><span class="line">--name mysql-3308 \</span><br><span class="line">mysql:8.0.20</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>查看网络</p>
+</blockquote>
+<p>查看bridge网络的所有容器：<code>docker inspect bridgr</code></p>
+<p>根据容器ID或者容器名称查询：<code>docker inspect --format=&#39;&#123;&#123;.NetworkSettings.IPAddress&#125;&#125;&#39; 容器名称 | 容器id</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@parak ~]# docker inspect --format=&#x27;&#123;&#123;.NetworkSettings.IPAddress&#125;&#125;&#x27; mysql-3307</span><br><span class="line">172.17.0.5</span><br><span class="line">[root@parak ~]# docker inspect --format=&#x27;&#123;&#123;.NetworkSettings.IPAddress&#125;&#125;&#x27; mysql-3308</span><br><span class="line">172.17.0.6</span><br></pre></td></tr></table></figure>
+
+<p>mysql-3307的IP为：<code>172.17.0.5</code></p>
+<p>mysql-3308的IP为：<code>172.17.0.6</code></p>
+<blockquote>
+<p>Master配置</p>
+</blockquote>
+<p>进入Master内部</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"># 创建用户，用于Slave访问Master</span><br><span class="line">mysql&gt; CREATE USER &#x27;Khighness&#x27;@&#x27;%&#x27; IDENTIFIED WITH mysql_native_password BY &#x27;KAG1823&#x27;;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; GRANT REPLICATION SLAVE ON *.* TO &#x27;Khighness&#x27;@&#x27;%&#x27;;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; FLUSH PRIVILEGES;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line"># 记录File和Position</span><br><span class="line">mysql&gt; SHOW MASTER STATUS\G;</span><br><span class="line">*************************** 1. row ***************************</span><br><span class="line">             File: mysql-bin.000003</span><br><span class="line">         Position: 4440</span><br><span class="line">     Binlog_Do_DB:</span><br><span class="line"> Binlog_Ignore_DB:</span><br><span class="line">Executed_Gtid_Set:</span><br><span class="line">1 row in set (0.00 sec)</span><br><span class="line"></span><br><span class="line">ERROR:</span><br><span class="line">No query specified</span><br></pre></td></tr></table></figure>
+
+<p>用户名：<code>slave</code></p>
+<p>File：<code>mysql-bin.000003</code></p>
+<p>Position：<code>4440</code></p>
+<blockquote>
+<p>Slave配置</p>
+</blockquote>
+<p>进入Slave内部</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; CHANGE MASTER TO</span><br><span class="line">    -&gt; MASTER_HOST=&#x27;172.17.0.5&#x27;,</span><br><span class="line">    -&gt; MASTER_PORT=3307,</span><br><span class="line">    -&gt; MASTER_USER=&#x27;Khighness&#x27;,</span><br><span class="line">    -&gt; MASTER_PASSWORD=&#x27;KAG1823&#x27;,</span><br><span class="line">    -&gt; MASTER_LOG_FILE=&#x27;mysql-bin.000003&#x27;,</span><br><span class="line">    -&gt; MASTER_LOG_POS=4440;</span><br><span class="line">Query OK, 0 rows affected, 2 warnings (0.02 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; START SLAVE;</span><br><span class="line">Query OK, 0 rows affected (0.01 sec)</span><br></pre></td></tr></table></figure>
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.parak.top">Khighness</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.parak.top/posts/c24675b4">https://www.parak.top/posts/c24675b4</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 </a>许可协议。转载请注明来自<a href="https://www.parak.top">炒菜K殿下</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/MySQL/">MySQL</a></div><div class="post_share"><div class="social-share" data-image="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-15.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/50163/"><img class="prev-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-16.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Chartjs</div></div></a></div><div class="next-post pull-right"><a href="/posts/f5f9fa9b/"><img class="next-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-14.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Docker</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#MySQL%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">MySQL概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#CentOS7%E5%AE%89%E8%A3%85"><span class="toc-number">1.1.</span> <span class="toc-text">CentOS7安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Docker%E5%AE%89%E8%A3%85"><span class="toc-number">1.2.</span> <span class="toc-text">Docker安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-number">1.3.</span> <span class="toc-text">配置文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%BB%E8%BE%91%E6%9E%B6%E6%9E%84"><span class="toc-number">1.4.</span> <span class="toc-text">逻辑架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="toc-number">1.5.</span> <span class="toc-text">存储引擎</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96"><span class="toc-number">2.</span> <span class="toc-text">索引优化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E7%AE%80%E4%BB%8B"><span class="toc-number">2.1.</span> <span class="toc-text">索引简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E5%88%86%E7%B1%BB"><span class="toc-number">2.2.</span> <span class="toc-text">索引分类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E7%BB%93%E6%9E%84"><span class="toc-number">2.3.</span> <span class="toc-text">索引结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Join%E6%9F%A5%E8%AF%A2"><span class="toc-number">2.4.</span> <span class="toc-text">Join查询</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90"><span class="toc-number">2.5.</span> <span class="toc-text">性能分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SQL%E4%BC%98%E5%8C%96"><span class="toc-number">2.6.</span> <span class="toc-text">SQL优化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E5%A4%B1%E6%95%88"><span class="toc-number">2.7.</span> <span class="toc-text">索引失效</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E9%9D%A2%E8%AF%95"><span class="toc-number">2.8.</span> <span class="toc-text">索引面试</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E6%88%AA%E5%8F%96"><span class="toc-number">3.</span> <span class="toc-text">查询截取</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96-1"><span class="toc-number">3.1.</span> <span class="toc-text">查询优化-1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96-2"><span class="toc-number">3.2.</span> <span class="toc-text">查询优化-2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96-3"><span class="toc-number">3.3.</span> <span class="toc-text">查询优化-3</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%85%A2%E6%9F%A5%E8%AF%A2%E6%97%A5%E5%BF%97"><span class="toc-number">3.4.</span> <span class="toc-text">慢查询日志</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%B9%E9%87%8F%E6%95%B0%E6%8D%AE%E8%84%9A%E6%9C%AC"><span class="toc-number">3.5.</span> <span class="toc-text">批量数据脚本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Show-Profile"><span class="toc-number">3.6.</span> <span class="toc-text">Show Profile</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E6%9F%A5%E8%AF%A2%E6%97%A5%E5%BF%97"><span class="toc-number">3.7.</span> <span class="toc-text">全局查询日志</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%94%81%E6%9C%BA%E5%88%B6"><span class="toc-number">4.</span> <span class="toc-text">锁机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">4.1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1"><span class="toc-number">4.2.</span> <span class="toc-text">事务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A8%E9%94%81"><span class="toc-number">4.3.</span> <span class="toc-text">表锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%8C%E9%94%81"><span class="toc-number">4.4.</span> <span class="toc-text">行锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MVCC"><span class="toc-number">4.5.</span> <span class="toc-text">MVCC</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-number">5.</span> <span class="toc-text">主从复制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%8D%E5%88%B6%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99"><span class="toc-number">5.1.</span> <span class="toc-text">复制的基本原则</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%8D%E5%88%B6%E7%9A%84%E6%9C%80%E5%A4%A7%E9%97%AE%E9%A2%98"><span class="toc-number">5.2.</span> <span class="toc-text">复制的最大问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E4%B8%BB%E4%B8%80%E4%BB%8E%E9%85%8D%E7%BD%AE"><span class="toc-number">5.3.</span> <span class="toc-text">一主一从配置</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background: gray"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By Khighness</div><div class="footer_custom_text"><a href="https://www.foreverblog.cn/" target="_blank" > <img src="https://img.foreverblog.cn/logo_en_default.png" alt="" style="width:auto;height:16px;"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'Py2eOHzSdrnxKPzKrOJaHJOq-9Nh9j0Va',
+      appKey: '9eQhwuCgyshpYKn4rtEhqt4R',
+      placeholder: '',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: true,
+      serverURLs: '',
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/Khighness/cdn/js/emotion.json',
+      emojiMaps: "",
+      enableQQ: true,
+      path: window.location.pathname,
+      requiredFields: ["nick, mail"],
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://unpkg.com/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="//code.tidio.co/ao1f4qdjllf8yowzz7v5brdaejt42uoi.js" async="async"></script><script>function onTidioChatApiReady() {
+  window.tidioChatApi.hide();
+  window.tidioChatApi.on("close", function() {
+    window.tidioChatApi.hide();
+  });
+}
+if (window.tidioChatApi) {
+  window.tidioChatApi.on("ready", onTidioChatApiReady);
+} else {
+  document.addEventListener("tidioChat-ready", onTidioChatApiReady);
+}
+
+var chatBtnFn = () => {
+  document.getElementById("chat_btn").addEventListener("click", function(){
+    window.tidioChatApi.show();
+    window.tidioChatApi.open();
+  });
+}
+chatBtnFn()
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>function history_calendar_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-history"><div class="card-content"><div class="item-headline"><i class="fas fa-clock fa-spin"></i><span>那年今日</span></div><div id="history-baidu" style="height: 100px;overflow: hidden"><div class="history_swiper-container" id="history-container" style="width: 100%;height: 100%"><div class="swiper-wrapper" id="history_container_wrapper" style="height:20px"></div></div></div></div>';
+                console.log('已挂载history_calendar')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            history_calendar_injector_config()
+        } </script><script data-pjax  src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script><script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/js/main.js"></script><!-- hexo injector body_end end --></body></html>

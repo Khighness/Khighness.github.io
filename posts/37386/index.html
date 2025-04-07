@@ -1,0 +1,647 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JUC-3(共享模型之内存) | Khighness</title><meta name="keywords" content="Java"><meta name="author" content="Khighness"><meta name="copyright" content="Khighness"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="结合缓存一致性协议和JVM源码说明volatile实现线程可见性的原理，结合CPU指令——读写内存屏障说明volatile防止指令重排序的原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JUC-3(共享模型之内存)">
+<meta property="og:url" content="https://www.parak.top/posts/37386/index.html">
+<meta property="og:site_name" content="Khighness">
+<meta property="og:description" content="结合缓存一致性协议和JVM源码说明volatile实现线程可见性的原理，结合CPU指令——读写内存屏障说明volatile防止指令重排序的原理。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-24.jpg">
+<meta property="article:published_time" content="2021-04-25T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-13T04:01:56.644Z">
+<meta property="article:author" content="Khighness">
+<meta property="article:tag" content="Java">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-24.jpg"><link rel="shortcut icon" href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/K.jpg"><link rel="canonical" href="https://www.parak.top/posts/37386/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//s4.cnzz.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?16576652";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script async="async" data-pjax="data-pjax" src="https://s4.cnzz.com/z_stat.php?id=1279324689&amp;web_id=1279324689"></script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Khighness","link":"链接: ","source":"来源: Khighness","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-01-13 12:01:56'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/background.css"><link rel="stylesheet" href="/css/iconfont/iconfont.css"><link rel="stylesheet" href="/css/mouse.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/css/main.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Khighness" type="application/atom+xml">
+</head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/Khighness.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">93</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">40</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-24.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Khighness</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">JUC-3(共享模型之内存)</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-04-25T16:00:00.000Z" title="发表于 2021-04-26 00:00:00">2021-04-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-01-13T04:01:56.644Z" title="更新于 2022-01-13 12:01:56">2022-01-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/JUC/">JUC</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">6.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>22分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="JUC-3(共享模型之内存)"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>JMM即Java Memory Model，它定义了主存、工作内存抽象概念，底层对应着CPU寄存器、缓存、硬件内存、CPU指令优化等。</p>
+<p>JMM体现在以下几个方面：</p>
+<ul>
+<li>原子性：保证指令不会受到线程上下文切换的影响</li>
+<li>可见性：保证指令不会受CPU缓存的影响</li>
+<li>有序性：保证指令不会受CPU指令并行优化的影响</li>
+</ul>
+<h2 id="3-1-JMM"><a href="#3-1-JMM" class="headerlink" title="3.1 JMM"></a>3.1 JMM</h2><h3 id="3-1-1-JMM内存模型"><a href="#3-1-1-JMM内存模型" class="headerlink" title="3.1.1 JMM内存模型"></a>3.1.1 JMM内存模型</h3><p>Java线程的通信由JMM控制，JMM的主要目的是定义程序中各种变量的访问规则。变量包括实例字段、静态字段，但不包括局部变量与方法参数，因为它们是线程私有的，不存在多线程竞争。</p>
+<p>JMM遵循一个基本原则：只要不改变程序执行结果，编译器和处理器怎么优化都可以。</p>
+<p>JMM规定所有变量都存储在主内存，每条线程都有自己的工作内存，工作内存中保存被该线程使用的变量的主内存副本，线程对变量的所有操作都必须在工作空间进行，不能直接读写主内存数据。不同线程间无法直接访问对方工作内存中的变量，线程通信必须经过主内存。</p>
+<p>Java内存模型跟CPU缓存模型类似，是基于CPU缓存模型来建立的，Java线程内模型是标准化的，屏蔽了底层不同操作系统的区别。每个线程都拥有自己的工作内存，一般不会直接操作主内存，在读取的时候把主内存中的共享变量复制到自己的工作内存。</p>
+<p>关于主内存与工作内存的交互，即变量如何从主内存拷贝到工作内存、从工作内存同步回主内存，JMM 定义了 8 种原子操作：</p>
+<table>
+<thead>
+<tr>
+<th><strong>操作</strong></th>
+<th><strong>作用变量范围</strong></th>
+<th><strong>作用</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>lock</td>
+<td>主内存</td>
+<td>把变量标识为线程独占状态</td>
+</tr>
+<tr>
+<td>unlock</td>
+<td>主内存</td>
+<td>释放处于锁定状态的变量</td>
+</tr>
+<tr>
+<td>read</td>
+<td>主内存</td>
+<td>把变量值从主内存传到工作内存</td>
+</tr>
+<tr>
+<td>load</td>
+<td>工作内存</td>
+<td>把 read 得到的值放入工作内存的变量副本</td>
+</tr>
+<tr>
+<td>user</td>
+<td>工作内存</td>
+<td>把工作内存中的变量值传给执行引擎</td>
+</tr>
+<tr>
+<td>assign</td>
+<td>工作内存</td>
+<td>把从执行引擎接收的值赋给工作内存变量</td>
+</tr>
+<tr>
+<td>store</td>
+<td>工作内存</td>
+<td>把工作内存的变量值传到主内存</td>
+</tr>
+<tr>
+<td>write</td>
+<td>主内存</td>
+<td>把 store 取到的变量值放入主内存变量中</td>
+</tr>
+</tbody></table>
+<h3 id="3-1-2-as-if-serial"><a href="#3-1-2-as-if-serial" class="headerlink" title="3.1.2 as-if-serial"></a>3.1.2 as-if-serial</h3><p>不管怎么重排序，单线程程序的执行结果不能改变，编译器和处理器必须遵循 as-if-serial 语义。</p>
+<p>为了遵循 as-if-serial，编译器和处理器不会对存在数据依赖关系的操作重排序，因为这种重排序会改变执行结果。但是如果操作之间不存在数据依赖关系，这些操作就可能被编译器和处理器重排序。</p>
+<p>as-if-serial 把单线程程序保护起来，给程序员一种幻觉：单线程程序是按程序的顺序执行的。</p>
+<h3 id="3-1-3-happens-before"><a href="#3-1-3-happens-before" class="headerlink" title="3.1.3 happens-before"></a>3.1.3 happens-before</h3><p>先行发生原则，JMM 定义的两项操作间的偏序关系，是判断数据是否存在竞争的重要手段。</p>
+<p>JMM 将 happens-before 要求禁止的重排序按是否会改变程序执行结果分为两类。对于会改变结果的重排序 JMM 要求编译器和处理器必须禁止，对于不会改变结果的重排序，JMM 不做要求。</p>
+<p>JMM 存在一些天然的 happens-before 关系，无需任何同步器协助就已经存在。如果两个操作的关系不在此列，并且无法从这些规则推导出来，它们就没有顺序性保障，虚拟机可以对它们随意进行重排序。</p>
+<ul>
+<li><p><strong>程序次序规则：</strong>一个线程内写在前面的操作先行发生于后面的。</p>
+</li>
+<li><p><strong>管程锁定规则：</strong> unlock 操作先行发生于后面对同一个锁的 lock 操作。</p>
+</li>
+<li><p><strong>volatile 规则：</strong>对 volatile 变量的写操作先行发生于后面的读操作。</p>
+</li>
+<li><p><strong>线程启动规则：</strong>线程的 start 方法先行发生于线程的每个动作。</p>
+</li>
+<li><p><strong>线程终止规则：</strong>线程中所有操作先行发生于对线程的终止检测。</p>
+</li>
+<li><p><strong>对象终结规则：</strong>对象的初始化先行发生于 finalize 方法。</p>
+</li>
+<li><p><strong>传递性：</strong>如果操作 A 先行发生于操作 B，操作 B 先行发生于操作 C，那么操作 A 先行发生于操作 C 。</p>
+</li>
+</ul>
+<h2 id="3-2-可见性"><a href="#3-2-可见性" class="headerlink" title="3.2 可见性"></a>3.2 可见性</h2><h3 id="3-2-1-退不出的循环"><a href="#3-2-1-退不出的循环" class="headerlink" title="3.2.1 退不出的循环"></a>3.2.1 退不出的循环</h3><p>先看一个现象，main线程对run变量的修改对于t线程不可见，导致了t线程无法停止：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Slf4j(topic = &quot;While&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">WhileDemo</span> &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="type">boolean</span> <span class="variable">run</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">        <span class="type">Thread</span> <span class="variable">t</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>(() -&gt; &#123;</span><br><span class="line">            <span class="keyword">while</span> (run) &#123; &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;t&quot;</span>);</span><br><span class="line">        t.start();</span><br><span class="line">        TimeUnit.SECONDS.sleep(<span class="number">1</span>);</span><br><span class="line">        run = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-2-2-分析"><a href="#3-2-2-分析" class="headerlink" title="3.2.2 分析"></a>3.2.2 分析</h3><ol>
+<li>初始状态，t线程刚开始从主内存读取了run的值到工作内存。</li>
+</ol>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/37386/image-20210423224812159.png" class="" title="image-20210423224812159">
+
+<ol start="2">
+<li><p>因为t线程要频繁地从主内存中读取run的值，JIT编译器会将run的值缓存至自己工作内存中的高速缓存中，减少对主存中run的访问，提高效率。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/37386/image-20210423225409195.png" class="" title="image-20210423225409195">
+</li>
+<li><p>1秒之后，main线程修改了run的值，并同步至主存，而t是从自己工作内存中的高速缓存中读取这个变量的值，结果永远是旧值。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/37386/image-20210423230248092.png" class="" title="image-20210423230248092">
+
+
+
+</li>
+</ol>
+<h3 id="3-2-3-解决办法"><a href="#3-2-3-解决办法" class="headerlink" title="3.2.3 解决办法"></a>3.2.3 解决办法</h3><p>（1）给变量<code>run</code>加上修饰符<code>volatile</code>。</p>
+<p>它可以用来修饰成员变量和静态成员变量，他可以避免线程从自己的工作缓存中查找变量的值，必须到主存中获取它的值，线程操作<code>volitale</code>变量都说直接操作主存。</p>
+<p>（2）使用<code>synchronized</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Slf4j(topic = &quot;While&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">WhileDemo</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">volatile</span> <span class="type">boolean</span> <span class="variable">run</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">Object</span> <span class="variable">lock</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Object</span>();</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">        <span class="type">Thread</span> <span class="variable">t</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>(() -&gt; &#123;</span><br><span class="line">            <span class="keyword">while</span> (run) &#123;</span><br><span class="line">                <span class="keyword">synchronized</span> (lock) &#123; &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;t&quot;</span>);</span><br><span class="line">        t.start();</span><br><span class="line">        TimeUnit.SECONDS.sleep(<span class="number">1</span>);</span><br><span class="line">        run = <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">synchronized</span> (lock) &#123;</span><br><span class="line">            run = <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>（3）在<code>while</code>循环中使用<code>System.out.println()</code>也会终止循环，原因可以看<code>println()</code>的源代码，其中执行的是<code>PrintStream#newLine()</code>方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">newLine</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="built_in">this</span>) &#123;  <span class="comment">// 加锁</span></span><br><span class="line">            ensureOpen();</span><br><span class="line">            textOut.newLine();</span><br><span class="line">            textOut.flushBuffer();</span><br><span class="line">            charOut.flushBuffer();</span><br><span class="line">            <span class="keyword">if</span> (autoFlush)</span><br><span class="line">                out.flush();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (InterruptedIOException x) &#123;</span><br><span class="line">        Thread.currentThread().interrupt();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (IOException x) &#123;</span><br><span class="line">        trouble = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-2-4-synchronized-volatile"><a href="#3-2-4-synchronized-volatile" class="headerlink" title="3.2.4 synchronized/volatile"></a>3.2.4 synchronized/volatile</h3><ul>
+<li><code>synchronized</code>可以修饰变量和方法，<code>volatile</code>只能修饰变量。</li>
+<li><code>synchronized</code>保证操作的原子性，<code>volatile</code>保持变量的可见性。</li>
+<li><code>synchronized</code>通常适用于写多读少的场景，<code>volatile</code>通常适用于写少读多的场景。</li>
+</ul>
+<h2 id="3-3-模式"><a href="#3-3-模式" class="headerlink" title="3.3 模式"></a>3.3 模式</h2><h3 id="3-3-1-终止模式之两阶段终止模式"><a href="#3-3-1-终止模式之两阶段终止模式" class="headerlink" title="3.3.1 终止模式之两阶段终止模式"></a>3.3.1 终止模式之两阶段终止模式</h3><p>使用<code>volatile</code>实现两阶段终止：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TwoStageTerminationDemo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">        <span class="type">TwoStageTermination</span> <span class="variable">tst</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">TwoStageTermination</span>();</span><br><span class="line">        tst.start();</span><br><span class="line">        Thread.sleep(<span class="number">3500</span>);</span><br><span class="line">        tst.stop();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Slf4j(topic = &quot;TwoStageTermination&quot;)</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TwoStageTermination</span> &#123;</span><br><span class="line">    <span class="comment">// 监控线程</span></span><br><span class="line">    <span class="keyword">private</span> Thread monitorThread;</span><br><span class="line">    <span class="comment">// 是否被打断</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="type">boolean</span> <span class="variable">stop</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">start</span><span class="params">()</span> &#123;</span><br><span class="line">        monitorThread = <span class="keyword">new</span> <span class="title class_">Thread</span>(() -&gt; &#123;</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">                <span class="type">Thread</span> <span class="variable">current</span> <span class="operator">=</span> Thread.currentThread();</span><br><span class="line">                <span class="comment">// 是否被打断</span></span><br><span class="line">                <span class="keyword">if</span> (stop) &#123;</span><br><span class="line">                    log.debug(<span class="string">&quot;料理后事&quot;</span>);</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    TimeUnit.SECONDS.sleep(<span class="number">1</span>);</span><br><span class="line">                    log.info(<span class="string">&quot;执行监控...&quot;</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    <span class="comment">// 睡眠被打断被清除打断标记，需要重新设置</span></span><br><span class="line">                    current.interrupt();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;monitor&quot;</span>);</span><br><span class="line">        monitorThread.start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">stop</span><span class="params">()</span> &#123;</span><br><span class="line">        stop = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-3-2-同步模式之Balking"><a href="#3-3-2-同步模式之Balking" class="headerlink" title="3.3.2 同步模式之Balking"></a>3.3.2 同步模式之Balking</h3><p>Balking（犹豫）模式用在一个线程发现另一个线程发现另一个线程或本线程已经做了某一件相同的事，那么本线程就无需再做了，直接结束返回，实际上是一种单例模式。</p>
+<p>修改两阶段终止如下，监控线程执行一次之后就不再执行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BalkingTwoStageTerminationDemo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">        <span class="type">BalkingTwoStageTermination</span> <span class="variable">btst</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BalkingTwoStageTermination</span>();</span><br><span class="line">        btst.start();</span><br><span class="line">        TimeUnit.SECONDS.sleep(<span class="number">3</span>);</span><br><span class="line">        btst.stop();</span><br><span class="line">        TimeUnit.SECONDS.sleep(<span class="number">1</span>);</span><br><span class="line">        btst.start();</span><br><span class="line">        TimeUnit.SECONDS.sleep(<span class="number">3</span>);</span><br><span class="line">        btst.stop();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Slf4j(topic = &quot;BalkingTwoStageTermination&quot;)</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BalkingTwoStageTermination</span> &#123;</span><br><span class="line">    <span class="comment">// 监控线程</span></span><br><span class="line">    <span class="keyword">private</span> Thread monitorThread;</span><br><span class="line">    <span class="comment">// 是否被打断</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="type">boolean</span> <span class="variable">stop</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// 是否已执行</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="type">boolean</span> <span class="variable">started</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">start</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="built_in">this</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (started) &#123;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            stop = <span class="literal">false</span>;</span><br><span class="line">            started = <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        monitorThread = <span class="keyword">new</span> <span class="title class_">Thread</span>(() -&gt; &#123;</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">                <span class="type">Thread</span> <span class="variable">current</span> <span class="operator">=</span> Thread.currentThread();</span><br><span class="line">                <span class="comment">// 是否被打断</span></span><br><span class="line">                <span class="keyword">if</span> (stop) &#123;</span><br><span class="line">                    log.debug(<span class="string">&quot;停止监控&quot;</span>);</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    TimeUnit.SECONDS.sleep(<span class="number">1</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                log.info(<span class="string">&quot;执行监控...&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;monitor&quot;</span>);</span><br><span class="line">        monitorThread.start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 暂停</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">stop</span><span class="params">()</span> &#123;</span><br><span class="line">        stop = <span class="literal">true</span>;</span><br><span class="line">        started = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="3-4-有序性"><a href="#3-4-有序性" class="headerlink" title="3.4 有序性"></a>3.4 有序性</h2><h3 id="3-4-1-指令重排序"><a href="#3-4-1-指令重排序" class="headerlink" title="3.4.1 指令重排序"></a>3.4.1 指令重排序</h3><p>JIT即时编译器的优化，可能会导致指令重排。JVM会在不影响正确性的前提下，调整语句的执行顺序。</p>
+<p>（1）例如以下代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="type">int</span> i, j;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 操作</span></span><br><span class="line">i = <span class="number">0</span>;</span><br><span class="line">j = <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+
+<p>对于<code>i</code>和<code>j</code>的赋值操作顺序，对最终的结果都没有影响。因此在真正执行的时候，可能<code>i</code>也可能是<code>j</code>先被赋值。但是在多线程情况下指令重排序会影响正确性。</p>
+<p>（2）比如<code>new</code>一个对象：                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      一般顺序为（1）分配内存（2）对象初始化（3）建立指针对应关系，高并发情况下顺序可能乱成132，对象初始化时就被另一个线程读取造成问题。</p>
+<h3 id="3-4-2-诡异的结果"><a href="#3-4-2-诡异的结果" class="headerlink" title="3.4.2 诡异的结果"></a>3.4.2 诡异的结果</h3><p>在如下代码中，<code>I_Result</code> 是一个对象，有一个属性<code>r1</code>用来保存结果。</p>
+<p>线程1执行<code>actor1</code>方法，线程2执行<code>actor2</code>方法，思考<code>r1</code>的可能结果。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="variable">num</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"><span class="type">boolean</span> <span class="variable">ready</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">actor1</span><span class="params">(I_Result r)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (ready) &#123;</span><br><span class="line">        r.r1 = num + num;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        r.r1 = <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">actor2</span><span class="params">(I_Result r)</span> &#123;</span><br><span class="line">    num = <span class="number">2</span>;</span><br><span class="line">    ready = <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>线程1先执行，线程2后执行，此时结果为1</li>
+<li>线程2先执行，线程1后执行，此时结果为4</li>
+<li>线程2先执行，执行到<code>num = 2</code>，线程1开始执行，此时结果为1</li>
+<li>线程2先执行，但是指令重排，先执行<code>ready = true</code>，线程1开始执行，进入<code>if (ready)</code>，此时结果为2</li>
+</ol>
+<p>解决方法：给<code>ready</code>加上修复符<code>volatile</code>。</p>
+<h3 id="3-4-3-重排序规则"><a href="#3-4-3-重排序规则" class="headerlink" title="3.4.3 重排序规则"></a>3.4.3 重排序规则</h3><ul>
+<li>指令重排序不会对存在数据依赖关系的操作进行重排序。比如：<code>a= 1; b = a;</code>。</li>
+<li>重排序是为了优化性能，但是不管如何重排，单线程下程序的执行结果不能改变。</li>
+<li>指令重排序保证单线程模式下的结果正确性，但是不保证多线程模式下的正确性。</li>
+<li>解决方法：<code>volatile</code>修饰的变量，可以禁用指令重排。</li>
+</ul>
+<h2 id="3-5-volatile原理"><a href="#3-5-volatile原理" class="headerlink" title="3.5 volatile原理"></a>3.5 volatile原理</h2><h3 id="3-5-1-double-checked-locking"><a href="#3-5-1-double-checked-locking" class="headerlink" title="3.5.1 double-checked locking"></a>3.5.1 double-checked locking</h3><p>以著名的DCL(double-checked locking)单例模式为例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DCLSingleton</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">DCLSingleton</span><span class="params">()</span> &#123; &#125;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="type">DCLSingleton</span> <span class="variable">INSTANCE</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 在第一次线程调用getInstance()，直接在synchronized外，判断instance对象是否存在</span></span><br><span class="line"><span class="comment">     * 如果不存在，才会去获取锁，然后创建单例对象，并且返回；第二个线程调用getInstance()，</span></span><br><span class="line"><span class="comment">     * 会进行instance的空判断，如果已经有单例对象就不会去同步块中获取锁，提高效率。</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> DCLSingleton <span class="title function_">getInstance</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (INSTANCE == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="comment">// 这个判断并不在synchronized同步代码块中，</span></span><br><span class="line">            <span class="comment">// 不能保证原子性、可见性和有序性，可能导致指令重排</span></span><br><span class="line">            <span class="keyword">synchronized</span> (DCLSingleton.class) &#123;</span><br><span class="line">                <span class="keyword">if</span> (INSTANCE == <span class="literal">null</span>) &#123;</span><br><span class="line">                    INSTANCE = <span class="keyword">new</span> <span class="title class_">DCLSingleton</span>();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上实现的特点：</p>
+<ul>
+<li>延迟实例化</li>
+<li>首次使用<code>getInstance()</code>才使用<code>synchronbized</code>加锁，后续使用时无需加锁。</li>
+<li>有隐含的，但很关键的一点：第一个<code>if</code>使用了<code>INSTANCE</code>变量，是在同步块之外。</li>
+</ul>
+<p>但是在多线程环境下，上面的代码是有问题的，<code>getInstance()</code>方法对应的字节码为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"> 0 getstatic #2 &lt;top/parak/jmm/DCLSingleton.INSTANCE&gt;  # 获取静态变量INSTANCE</span><br><span class="line"> 3 ifnonnull 37 (+34)                                  # 判断INSTANCE是否为空</span><br><span class="line"> 6 ldc #3 &lt;top/parak/jmm/DCLSingleton&gt;                 # 从运行时常量池中将DCLSingeton的class对象推入操作数栈</span><br><span class="line"> 8 dup                                                 # 复制操作数栈栈顶的值，即DCLSingleton的class对象</span><br><span class="line"> 9 astore_0                                            # 将DCLSingleton的class对象存入局部变量表索引为0的位置</span><br><span class="line">10 monitorenter                                        # 进入INSTANCE对象的monitor</span><br><span class="line">11 getstatic #2 &lt;top/parak/jmm/DCLSingleton.INSTANCE&gt;  # 获取静态变量INSTANCE</span><br><span class="line">14 ifnonnull 27 (+13)                                  # 判断INSTANCE是否为空</span><br><span class="line">17 new #3 &lt;top/parak/jmm/DCLSingleton&gt;                 # new一个DCLSingleton</span><br><span class="line">20 dup                                                 # 复制操作数栈栈顶的值，即DCLSingleton的class对象</span><br><span class="line">21 invokespecial #4 &lt;top/parak/jmm/DCLSingleton.&lt;init&gt;&gt;# 调用DCLSingeton的构造方法</span><br><span class="line">24 putstatic #2 &lt;top/parak/jmm/DCLSingleton.INSTANCE&gt;  # 将新对象赋值给静态变量INSTANCE</span><br><span class="line">27 aload_0                                             # 从局部变量表导出索引为0位置的元素</span><br><span class="line">28 monitorexit                                         # 退出INSTANCE对象的monitor</span><br><span class="line">29 goto 37 (+8)                                        # goto37行处理</span><br><span class="line">32 astore_1                                            # 32-35是异常</span><br><span class="line">33 aload_0</span><br><span class="line">34 monitorexit</span><br><span class="line">35 aload_1</span><br><span class="line">36 athrow</span><br><span class="line">37 getstatic #2 &lt;top/parak/jmm/DCLSingleton.INSTANCE&gt; # 获取静态变量INSTANCE</span><br><span class="line">40 areturn</span><br></pre></td></tr></table></figure>
+
+<p>重点关注17-24行：</p>
+<ul>
+<li>17：创建<code>DCLSingleton</code>对象</li>
+<li>20：复制<code>DCLSingleton</code>的class对象</li>
+<li>21：调用class对象的默认构造方法</li>
+<li>24：将新对象赋值给静态变量<code>INSTANCE</code></li>
+</ul>
+<p>也许JVM会优化为：先执行24，再执行21，即先赋值，再调构造。</p>
+<p>可能造成：一个线程正在造对象，对象还为空的时候就被另一线程拿去使用。</p>
+<p>解决方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DCLSingleton</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">DCLSingleton</span><span class="params">()</span> &#123; &#125;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">static</span> <span class="type">DCLSingleton</span> <span class="variable">INSTANCE</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> DCLSingleton <span class="title function_">getInstance</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (INSTANCE == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">synchronized</span> (DCLSingleton.class) &#123;</span><br><span class="line">                <span class="keyword">if</span> (INSTANCE == <span class="literal">null</span>) &#123;</span><br><span class="line">                    INSTANCE = <span class="keyword">new</span> <span class="title class_">DCLSingleton</span>();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从字节码上看不出volatile的效果，但是我们从屏障的角度分析：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"> # ====================================================&gt; 加入对INSTANCE的读屏障</span><br><span class="line"> # 保证此后的读取，加载的都是主存中的最新数据</span><br><span class="line"> 0 getstatic #2 &lt;top/parak/jmm/DCLSingleton.INSTANCE&gt;</span><br><span class="line"> 3 ifnonnull 37 (+34)</span><br><span class="line"> 6 ldc #3 &lt;top/parak/jmm/DCLSingleton&gt;</span><br><span class="line"> 8 dup</span><br><span class="line"> 9 astore_0</span><br><span class="line">10 monitorenter # =====================================&gt; 保证原子性和可见性</span><br><span class="line">11 getstatic #2 &lt;top/parak/jmm/DCLSingleton.INSTANCE&gt;</span><br><span class="line">14 ifnonnull 27 (+13)</span><br><span class="line">17 new #3 &lt;top/parak/jmm/DCLSingleton&gt;</span><br><span class="line">20 dup</span><br><span class="line">21 invokespecial #4 &lt;top/parak/jmm/DCLSingleton.&lt;init&gt;&gt;</span><br><span class="line">24 putstatic #2 &lt;top/parak/jmm/DCLSingleton.INSTANCE&gt;</span><br><span class="line"> # ====================================================&gt; 加入对INSTANCE的写屏障</span><br><span class="line"> # 保证此前的写入，都同步到主存当中</span><br><span class="line">27 aload_0</span><br><span class="line">28 monitorexit  # =====================================&gt; 保证原子性和可见性</span><br><span class="line">29 goto 37 (+8)</span><br><span class="line">32 astore_1</span><br><span class="line">33 aload_0</span><br><span class="line">34 monitorexit</span><br><span class="line">35 aload_1</span><br><span class="line">36 athrow</span><br><span class="line">37 getstatic #2 &lt;top/parak/jmm/DCLSingleton.INSTANCE&gt;</span><br><span class="line">40 areturn</span><br></pre></td></tr></table></figure>
+
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/37386/image-20210425100017250.png" class="" title="image-20210425100017250">
+
+
+
+<h3 id="3-5-2-缓存一致性协议"><a href="#3-5-2-缓存一致性协议" class="headerlink" title="3.5.2 缓存一致性协议"></a>3.5.2 缓存一致性协议</h3><p>Intel处理器对应的缓存一致性协议为MESI。</p>
+<p>CPU缓存行存在四种状态：</p>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>M(modifed)</td>
+<td>缓存行有效，数据被修改，与内存中的数据不一致，数据只存在于该CPU缓存行中。</td>
+</tr>
+<tr>
+<td>E(exclusive)</td>
+<td>缓存行有效，数据与内存中的数据一致，数据只存在于该CPU缓存行中。</td>
+</tr>
+<tr>
+<td>S(shared)</td>
+<td>缓存行有效，数据与内存中的数据一致，数据存在于很多CPU缓存行中。</td>
+</tr>
+<tr>
+<td>I(invalid)：</td>
+<td>缓存行无效。</td>
+</tr>
+</tbody></table>
+<p>缓存一致性协议需要与多处理器的总线嗅探机制结合使用。</p>
+<p>开启了缓存一致性协议后，处理器需要对总线进行嗅探，监听总线中这个处理器所感兴趣的数据。</p>
+<p>如果主内存中所感兴趣的数据被其他处理器修改，那么线程工作内存中的对应数据会被立即失效。</p>
+<h3 id="3-5-3-实现可见性原理"><a href="#3-5-3-实现可见性原理" class="headerlink" title="3.5.3 实现可见性原理"></a>3.5.3 实现可见性原理</h3><p>JVM中volatile需要实现的内存屏障，在源代码bytecodeInterpreter中实现。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">OrderAccess:<span class="built_in">storeload</span>();</span><br></pre></td></tr></table></figure>
+
+<p>这个方法根据操作系统和CPU的不同会有不同的实现（跨平台就是实现了不同平台的指令集的屏蔽），比如Linux_X86的实现：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">OrderAccess::storeload</span><span class="params">()</span> </span>&#123; <span class="built_in">fence</span>(); &#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>fence</code>的实现调用汇编指令：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">OrderAccess::fence</span><span class="params">()</span> </span>&#123;</span><br><span class="line"> 	<span class="keyword">if</span> (os::<span class="built_in">is_MP</span>()) &#123; <span class="comment">// 判断是否多核处理器，如果是才有必要增加内存屏障</span></span><br><span class="line">        <span class="comment">// always use locked addl since mfence is sometimes expensive</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> AMD64</span></span><br><span class="line">        <span class="comment">// __asm__ volatile嵌入汇编指令</span></span><br><span class="line">        <span class="function">__asm__ <span class="title">volatile</span> <span class="params">(<span class="string">&quot;lock; addl $0, 0(%%rsp)&quot;</span> : : : <span class="string">&quot;cc&quot;</span>, <span class="string">&quot;memory&quot;</span>)</span></span>;</span><br><span class="line"><span class="meta">#<span class="keyword">else</span> </span></span><br><span class="line">        <span class="function">__asm__ <span class="title">volatile</span> <span class="params">(<span class="string">&quot;lock; addl $0, 0(%%esp)&quot;</span> : : : <span class="string">&quot;cc&quot;</span>, <span class="string">&quot;memory&quot;</span>)</span></span>; </span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>lock</code>前缀指令在多核处理器下会引发两件事情：</p>
+<ol>
+<li>将当前CPU缓存行的数据写回到系统内存。</li>
+<li>这个写回内存的操作会使在其他CPU里缓存了该内存地址的数据无效。</li>
+</ol>
+<p>为了提高提高处理速度，CPU不直接和内存进行通信，而是先将系统内存的数据读到内部缓存（L1、L2或者L3）后再进行操作，但操作完不知道何时会写到内存。如果对声明了volatile的变量进行写操作，JVM就会向CPU发送Lock前缀的指令，将这个变量所在缓存行的数据写回到系统内存。但是，就算写回到内存，如果其他CPU缓存的值还是旧的，再执行计算操作就会有问题。所以，在多核处理器下，为了保证各个CPU的缓存是一致的，就会实现缓存一致性协议，每个CPU通过嗅探在总线上传播的数据来检查自己缓存的值是否过期，当CPU发现自己缓存行对应的内存地址被修改，就会将当前CPU的缓存行设置成无效状态，当CPU对这个数据进行修改操作的时候，会重新从系统内存中把数据读到CPU缓存里。</p>
+<p>1）Lock前缀指令会引起CPU缓存回写到内存。</p>
+<p>Lock前缀指令导致在执行指令期间，声言CPU的LOCK#信号。在多核处理器环境中，LOCK#信号确保在声言该信号期间，CPU可以独占任何共享内存。但是，在最近的处理器里，LOCK#信号一般不锁总线，而是锁缓存，毕竟锁总线开销的比较大。</p>
+<p>对于Intel486和Pentium处理器，在锁操作时，总是在总线上声言LOCK#信号。但在P6和目前的处理器中，如果访问的内存区域已经缓存在CPU内部，则不会声音LOCK#信号。相反，它会锁定这块内存区域的缓存并回写到内存，并使用缓存一致性机制来确保修改的原子性，此操作被成为“缓存锁定”，缓存一致性机制会阻止同时修改两个以上CPU缓存的内存区域数据。</p>
+<p>2）一个CPU的缓存回写到内存会导致其他CPU的缓存失效。</p>
+<p>IA-32处理器和Intel 64处理器使用MESI控制协议去维护内存缓存和其他CPU缓存的一致性。在多核处理器系统中进行操作的时候，IA-32和Intel 64处理器能嗅探其他处理器访问系统内存和它们的内部缓存。CPU通过嗅探技术保证它的内部缓存、系统内存和其他处理器的缓存的数据在总线上保持一致。</p>
+<p>例如，在Pentium和P6 family处理器中，如果通过嗅探一个CPU来检测其他CPU打算写内存地址，而这个地址当前处于共享状态，那么正在嗅探的处理器将使它的缓存行无效，在下次访问相同内存地址时，强制执行缓存行填充。</p>
+<h3 id="3-5-4-实现有序性原理"><a href="#3-5-4-实现有序性原理" class="headerlink" title="3.5.4 实现有序性原理"></a>3.5.4 实现有序性原理</h3><p>为了实现volatile的内存语义，编译器在生成字节码时会通过插入内存屏障来禁止指令重排序。</p>
+<p>内存屏障：内存屏障是一种CPU指令，它的作用是对该指令前和指令后的一些操作产生一定的约束，保证一些操作按顺序执行。</p>
+<p>插入内存屏障的策略：</p>
+<table>
+<thead>
+<tr>
+<th><strong>屏障类型</strong></th>
+<th><strong>指令示例</strong></th>
+<th><strong>说明</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>LoadLoad Barriers</td>
+<td>Load1;LoadLoad;Load2</td>
+<td>保证Load1数据的读取先于Load2及后续所有读取指令的执行</td>
+</tr>
+<tr>
+<td>StoreStore Barriers</td>
+<td>Store1;StoreStore;Store2</td>
+<td>保证Store1数据刷新到主内存先于Store2及后续所有存储指令</td>
+</tr>
+<tr>
+<td>LoadStore Barriers</td>
+<td>Load1;LoadStore;Store2</td>
+<td>保证Load1数据的读取先于Store2及后续的所有存储指令刷新到主内存</td>
+</tr>
+<tr>
+<td>StoreLoad Barriers</td>
+<td>Store1;StoreLoad;Load2</td>
+<td>保证Store1数据刷新到主内存先于Load2及后续所有读取指令的执行</td>
+</tr>
+</tbody></table>
+<p>Java内存模型对编译器指定的volatile重排序规则为：</p>
+<ul>
+<li><p>当第一个操作是volatile读时，无论第二个操作是什么都不能进行重排序；</p>
+</li>
+<li><p>当第二个操作是volatile写时，无论第一个操作是什么都不能进行重排序；</p>
+</li>
+<li><p>当第一个操作是volatile写时，第二个操作为volatile读时，不能进行重排序。</p>
+</li>
+</ul>
+<p>volatile读：在每个volatile读后面分别插入LoadLoad屏障及LoadStore屏障。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/37386/image-20220112001118653.png" class="" title="image-20220112001118653">
+
+<ul>
+<li>LoadLoad屏障的作用：禁止上面所有的普通读操作和上面的volatile读操作进行重排序。</li>
+<li>LoadStore屏障的作用：禁止下面的普通写和上面的volatile读进行重排序。</li>
+</ul>
+<p>volatile写：在每个volatile写前面插入一个StoreStore屏障，在每个volatile写后面插入一个StoreLoad屏障。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/37386/image-20220112001156795.png" class="" title="image-20220112001156795">
+
+
+
+<ul>
+<li>StoreStore屏障的作用：禁止下面的普通写和下面的volatile写重排序。</li>
+<li>StoreLoad屏障的作用：防止上面的volatile写与下面可能出现的volatile读/写重排序。</li>
+</ul>
+<h2 id="3-6-习题"><a href="#3-6-习题" class="headerlink" title="3.6 习题"></a>3.6 习题</h2><h3 id="3-6-1-balking模式"><a href="#3-6-1-balking模式" class="headerlink" title="3.6.1 balking模式"></a>3.6.1 balking模式</h3><p>希望<code>doInit()</code>方法仅被调用一次，下面的实现是否有问题，为什么？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Slf4j(topic = &quot;BalkingPractice&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BalkingPractice</span> &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">volatile</span> <span class="type">boolean</span> <span class="variable">initialized</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">init</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (initialized) &#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        doInit();</span><br><span class="line">        initialized = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">doInit</span><span class="params">()</span> &#123;</span><br><span class="line">        log.debug(<span class="string">&quot;init...&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有问题，<code>volatile</code>无法保证原子性，当多个线程同时调用<code>init()</code>方法时，此时都进入到<code>if</code>判断，都调用<code>doInit()</code>方法，此时就调用了多次。</p>
+<p>解决方法：对<code>init()</code>方法的方法体，通过<code>synchronized</code>加锁，防止多个线程共享<code>initialized</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Slf4j(topic = &quot;BalkingPractice&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BalkingPractice</span> &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">volatile</span> <span class="type">boolean</span> <span class="variable">initialized</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">Object</span> <span class="variable">lock</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Object</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">init</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (lock) &#123;</span><br><span class="line">            <span class="keyword">if</span> (initialized) &#123;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            doInit();</span><br><span class="line">            initialized = <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">doInit</span><span class="params">()</span> &#123;</span><br><span class="line">        log.debug(<span class="string">&quot;init...&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-6-2-线程安全单例"><a href="#3-6-2-线程安全单例" class="headerlink" title="3.6.2 线程安全单例"></a>3.6.2 线程安全单例</h3><p>饿汉式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 问题1：为什么加final？</span></span><br><span class="line"><span class="comment">// 答：防止子类继承修改。</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">Singleton</span> implaments Serializable &#123;</span><br><span class="line">    <span class="comment">// 问题2：为什么构造函数设为私有？是否能防止反射创建新的实例？</span></span><br><span class="line">    <span class="comment">// 答：防止其他类中使用new生成新的实例，不能防止反射创建新的实例。</span></span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">Singleton</span><span class="params">()</span> &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 问题3：这样初始化是否能保证单例对象创建时的线程安全？</span></span><br><span class="line">    <span class="comment">// 答：能，类变量在JVM类加载的初始化(clinit)阶段完成赋值，JVM保证此操作的线程安全性。</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="type">Singleton</span> <span class="variable">INSTANCE</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Singleton</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 问题4：为什么提供静态方法而不是直接将INSTANCE设置为public？</span></span><br><span class="line">    <span class="comment">// 答：（1）提供更好的封装性（2）提供泛型的支持</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title function_">getInstance</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 问题5：这个方法有什么作用?</span></span><br><span class="line">    <span class="comment">// 答：防止反序列化时生成不同的单例对象。</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">readResolve</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>DCL懒汉式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">DCLSingleton</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">DCLSingleton</span><span class="params">()</span> &#123; &#125;</span><br><span class="line">    <span class="comment">// 问题1：为什么要给单例变量加上volatile关键字修饰？</span></span><br><span class="line">    <span class="comment">// 答：防止第一次创建对象时指令重排序。</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">static</span> <span class="type">DCLSingleton</span> <span class="variable">INSTANCE</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> DCLSingleton <span class="title function_">getInstance</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (INSTANCE == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">synchronized</span> (DCLSingleton.class) &#123;</span><br><span class="line">                <span class="comment">// 问题3：前面已经进行一次判空，为什么还要在这里加上为空判断？</span></span><br><span class="line">				<span class="comment">// 答：防止多线程并发导致不安全的问题：单例对象重复创建。</span></span><br><span class="line">                <span class="comment">// 比如：有两个线程。都进入了第一次判空，它们都判断单例为空。</span></span><br><span class="line">                <span class="comment">// （1）t1线程获取到单例对象锁，然后创建对象，释放锁。</span></span><br><span class="line">                <span class="comment">// （2）t2线程获取到单例对象锁，由于第一次判空为真，</span></span><br><span class="line">                <span class="comment">//     如果没有进行第二次判空，它也会创建单例对象，破坏单例。</span></span><br><span class="line">                <span class="keyword">if</span> (INSTANCE == <span class="literal">null</span>) &#123;</span><br><span class="line">                    INSTANCE = <span class="keyword">new</span> <span class="title class_">DCLSingleton</span>();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>静态内部类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">Singleton</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">Singleton</span><span class="params">()</span> &#123; &#125;</span><br><span class="line">    <span class="comment">// 问题1：静态内部类属于饿汉式还是懒汉式？</span></span><br><span class="line">    <span class="comment">// 答：属于懒汉式，当Sinleton加载的时候，SingletonHolder并没有加载进内存，只要当第一次调用getInstance的时候，SingletonHolder才会加载进内存，并且初始化INSTANCE实例。</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">SingletonHolder</span> &#123;</span><br><span class="line">        <span class="comment">// 问题2：这样创建单例对象是否存在线程安全问题？</span></span><br><span class="line">        <span class="comment">// 答：类加载时JVM会保证线程安全。</span></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">Singleton</span> <span class="variable">INSTANCE</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Singleton</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title function_">getInstance</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> Singletonolder.INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>枚举类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 问题1：枚举单例是如何限制实例个数的？</span></span><br><span class="line"><span class="comment">// 答：创建枚举类的时候就已经定义好了，每个枚举常量其实就是枚举类的一个静态成员变量。</span></span><br><span class="line"><span class="comment">// 问题2：枚举单例在创建时是否有并发问题？</span></span><br><span class="line"><span class="comment">// 答：没有并发问题，枚举类成员底层是一个静态成员边框，在类加载时就创建了，JVM会保证线程安全。</span></span><br><span class="line"><span class="comment">// 问题3：枚举单例能否被反射破坏单例?</span></span><br><span class="line"><span class="comment">// 答：不能，反射在newInstance的时候会检查，如果是枚举类型就会抛出异常。</span></span><br><span class="line"><span class="comment">// 问题4：枚举单例能否被反序列化破坏单例？</span></span><br><span class="line"><span class="comment">// 答：不能，枚举类的实现考虑到了这一点，反序列化后依然是从前的单例。</span></span><br><span class="line"><span class="comment">// 问题5：枚举单例如果希望加入一些单例创建时的初始化逻辑应该如何做？</span></span><br><span class="line"><span class="comment">// 答：加构造方法。</span></span><br><span class="line"><span class="keyword">enum</span> <span class="title class_">Singleton</span>&#123;</span><br><span class="line">    INSTANCE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.parak.top">Khighness</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.parak.top/posts/37386">https://www.parak.top/posts/37386</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 </a>许可协议。转载请注明来自<a href="https://www.parak.top">炒菜K殿下</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Java/">Java</a></div><div class="post_share"><div class="social-share" data-image="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-24.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/62265/"><img class="prev-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-25.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">JUC-4(共享模型之无锁)</div></div></a></div><div class="next-post pull-right"><a href="/posts/62531/"><img class="next-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-23.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">JUC-2(共享模型之管程)</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/15536/" title="Spring-事务原理"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-63.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-20</div><div class="title">Spring-事务原理</div></div></a></div><div><a href="/posts/54880/" title="Spring-aop原理"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-62.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-19</div><div class="title">Spring-aop原理</div></div></a></div><div><a href="/posts/408/" title="Spring-循环依赖"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-61.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-18</div><div class="title">Spring-循环依赖</div></div></a></div><div><a href="/posts/55590/" title="Spring-bean的生命周期"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-60.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-17</div><div class="title">Spring-bean的生命周期</div></div></a></div><div><a href="/posts/39013/" title="Spring-组件注册"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-59.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-16</div><div class="title">Spring-组件注册</div></div></a></div><div><a href="/posts/11567/" title="JVM-15(垃圾回收器)"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-44.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-06-01</div><div class="title">JVM-15(垃圾回收器)</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-JMM"><span class="toc-text">3.1 JMM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-1-JMM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B"><span class="toc-text">3.1.1 JMM内存模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-2-as-if-serial"><span class="toc-text">3.1.2 as-if-serial</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-3-happens-before"><span class="toc-text">3.1.3 happens-before</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-%E5%8F%AF%E8%A7%81%E6%80%A7"><span class="toc-text">3.2 可见性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-1-%E9%80%80%E4%B8%8D%E5%87%BA%E7%9A%84%E5%BE%AA%E7%8E%AF"><span class="toc-text">3.2.1 退不出的循环</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-2-%E5%88%86%E6%9E%90"><span class="toc-text">3.2.2 分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-3-%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95"><span class="toc-text">3.2.3 解决办法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-4-synchronized-volatile"><span class="toc-text">3.2.4 synchronized&#x2F;volatile</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3-%E6%A8%A1%E5%BC%8F"><span class="toc-text">3.3 模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-1-%E7%BB%88%E6%AD%A2%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%B8%A4%E9%98%B6%E6%AE%B5%E7%BB%88%E6%AD%A2%E6%A8%A1%E5%BC%8F"><span class="toc-text">3.3.1 终止模式之两阶段终止模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-2-%E5%90%8C%E6%AD%A5%E6%A8%A1%E5%BC%8F%E4%B9%8BBalking"><span class="toc-text">3.3.2 同步模式之Balking</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-4-%E6%9C%89%E5%BA%8F%E6%80%A7"><span class="toc-text">3.4 有序性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-1-%E6%8C%87%E4%BB%A4%E9%87%8D%E6%8E%92%E5%BA%8F"><span class="toc-text">3.4.1 指令重排序</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-2-%E8%AF%A1%E5%BC%82%E7%9A%84%E7%BB%93%E6%9E%9C"><span class="toc-text">3.4.2 诡异的结果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-3-%E9%87%8D%E6%8E%92%E5%BA%8F%E8%A7%84%E5%88%99"><span class="toc-text">3.4.3 重排序规则</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-5-volatile%E5%8E%9F%E7%90%86"><span class="toc-text">3.5 volatile原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-5-1-double-checked-locking"><span class="toc-text">3.5.1 double-checked locking</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-5-2-%E7%BC%93%E5%AD%98%E4%B8%80%E8%87%B4%E6%80%A7%E5%8D%8F%E8%AE%AE"><span class="toc-text">3.5.2 缓存一致性协议</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-5-3-%E5%AE%9E%E7%8E%B0%E5%8F%AF%E8%A7%81%E6%80%A7%E5%8E%9F%E7%90%86"><span class="toc-text">3.5.3 实现可见性原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-5-4-%E5%AE%9E%E7%8E%B0%E6%9C%89%E5%BA%8F%E6%80%A7%E5%8E%9F%E7%90%86"><span class="toc-text">3.5.4 实现有序性原理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-6-%E4%B9%A0%E9%A2%98"><span class="toc-text">3.6 习题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-6-1-balking%E6%A8%A1%E5%BC%8F"><span class="toc-text">3.6.1 balking模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-6-2-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E5%8D%95%E4%BE%8B"><span class="toc-text">3.6.2 线程安全单例</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background: gray"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By Khighness</div><div class="footer_custom_text"><a href="https://www.foreverblog.cn/" target="_blank" > <img src="https://img.foreverblog.cn/logo_en_default.png" alt="" style="width:auto;height:16px;"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'Py2eOHzSdrnxKPzKrOJaHJOq-9Nh9j0Va',
+      appKey: '9eQhwuCgyshpYKn4rtEhqt4R',
+      placeholder: '',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: true,
+      serverURLs: '',
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/Khighness/cdn/js/emotion.json',
+      emojiMaps: "",
+      enableQQ: true,
+      path: window.location.pathname,
+      requiredFields: ["nick, mail"],
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://unpkg.com/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="//code.tidio.co/ao1f4qdjllf8yowzz7v5brdaejt42uoi.js" async="async"></script><script>function onTidioChatApiReady() {
+  window.tidioChatApi.hide();
+  window.tidioChatApi.on("close", function() {
+    window.tidioChatApi.hide();
+  });
+}
+if (window.tidioChatApi) {
+  window.tidioChatApi.on("ready", onTidioChatApiReady);
+} else {
+  document.addEventListener("tidioChat-ready", onTidioChatApiReady);
+}
+
+var chatBtnFn = () => {
+  document.getElementById("chat_btn").addEventListener("click", function(){
+    window.tidioChatApi.show();
+    window.tidioChatApi.open();
+  });
+}
+chatBtnFn()
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>function history_calendar_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-history"><div class="card-content"><div class="item-headline"><i class="fas fa-clock fa-spin"></i><span>那年今日</span></div><div id="history-baidu" style="height: 100px;overflow: hidden"><div class="history_swiper-container" id="history-container" style="width: 100%;height: 100%"><div class="swiper-wrapper" id="history_container_wrapper" style="height:20px"></div></div></div></div>';
+                console.log('已挂载history_calendar')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            history_calendar_injector_config()
+        } </script><script data-pjax  src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script><script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/js/main.js"></script><!-- hexo injector body_end end --></body></html>

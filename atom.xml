@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Khighness</title>
+  
+  
+  <link href="https://www.parak.top/atom.xml" rel="self"/>
+  
+  <link href="https://www.parak.top/"/>
+  <updated>2024-06-04T16:42:32.788Z</updated>
+  <id>https://www.parak.top/</id>
+  
+  <author>
+    <name>Khighness</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>2023总结</title>
+    <link href="https://www.parak.top/posts/27845/"/>
+    <id>https://www.parak.top/posts/27845/</id>
+    <published>2024-04-08T16:00:00.000Z</published>
+    <updated>2024-06-04T16:42:32.788Z</updated>
+    
+    
+    <summary type="html">2023总结</summary>
+    
+    
+    
+    <category term="随笔" scheme="https://www.parak.top/categories/%E9%9A%8F%E7%AC%94/"/>
+    
+    
+    <category term="随笔" scheme="https://www.parak.top/tags/%E9%9A%8F%E7%AC%94/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>ANTLR学习笔记</title>
+    <link href="https://www.parak.top/posts/49052/"/>
+    <id>https://www.parak.top/posts/49052/</id>
+    <published>2024-03-09T16:00:00.000Z</published>
+    <updated>2024-04-08T18:22:18.145Z</updated>
+    
+    
+    <summary type="html">ANTLR 是功能强大的解析器生成器，用于读取，处理，执行或翻译结构化文本或二进制文件。 它被广泛用于构建语言，工具和框架。</summary>
+    
+    
+    
+    <category term="编译" scheme="https://www.parak.top/categories/%E7%BC%96%E8%AF%91/"/>
+    
+    
+    <category term="开源" scheme="https://www.parak.top/tags/%E5%BC%80%E6%BA%90/"/>
+    
+    <category term="编译原理" scheme="https://www.parak.top/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/"/>
+    
+    <category term="规则引擎" scheme="https://www.parak.top/tags/%E8%A7%84%E5%88%99%E5%BC%95%E6%93%8E/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>etcd-3-raft选举</title>
+    <link href="https://www.parak.top/posts/43737/"/>
+    <id>https://www.parak.top/posts/43737/</id>
+    <published>2023-03-05T16:00:00.000Z</published>
+    <updated>2023-07-30T16:05:11.803Z</updated>
+    
+    
+    <summary type="html">深入剖析etcd/raft中与raft选举相关的优化：Pre-Vote, Check Quorum, Leader Lease，然后分析选举的代码实现。</summary>
+    
+    
+    
+    <category term="etcd" scheme="https://www.parak.top/categories/etcd/"/>
+    
+    
+    <category term="etcd" scheme="https://www.parak.top/tags/etcd/"/>
+    
+    <category term="Distributed-System" scheme="https://www.parak.top/tags/Distributed-System/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>etcd-2-raft总体设计</title>
+    <link href="https://www.parak.top/posts/38499/"/>
+    <id>https://www.parak.top/posts/38499/</id>
+    <published>2023-03-04T16:00:00.000Z</published>
+    <updated>2023-03-04T17:12:22.770Z</updated>
+    
+    
+    <summary type="html">从顶层视角看看etcd/raft的总体设计，分为三个模块：Raft状态机、存储模块和传输模块。对etcd/raft的整体把控，有利于理解实现细节。</summary>
+    
+    
+    
+    <category term="etcd" scheme="https://www.parak.top/categories/etcd/"/>
+    
+    
+    <category term="etcd" scheme="https://www.parak.top/tags/etcd/"/>
+    
+    <category term="Distributed-System" scheme="https://www.parak.top/tags/Distributed-System/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>etcd-1-raftexample</title>
+    <link href="https://www.parak.top/posts/38500/"/>
+    <id>https://www.parak.top/posts/38500/</id>
+    <published>2023-03-03T16:00:00.000Z</published>
+    <updated>2023-03-04T16:58:19.888Z</updated>
+    
+    
+    <summary type="html">在阅读etcd的raft源码之前，首先应该学会使用etcd的raft模块。官方提供的raftexample实现了一个基于http的分布式存储服务。</summary>
+    
+    
+    
+    <category term="etcd" scheme="https://www.parak.top/categories/etcd/"/>
+    
+    
+    <category term="etcd" scheme="https://www.parak.top/tags/etcd/"/>
+    
+    <category term="Distributed-System" scheme="https://www.parak.top/tags/Distributed-System/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>偶然</title>
+    <link href="https://www.parak.top/posts/57950/"/>
+    <id>https://www.parak.top/posts/57950/</id>
+    <published>2023-03-02T16:00:00.000Z</published>
+    <updated>2024-06-04T16:53:24.429Z</updated>
+    
+    
+    <summary type="html">但想了很久都没想到有什么要紧的，明明什么都没有却好像什么都没丢。</summary>
+    
+    
+    
+    <category term="随笔" scheme="https://www.parak.top/categories/%E9%9A%8F%E7%AC%94/"/>
+    
+    
+    <category term="随笔" scheme="https://www.parak.top/tags/%E9%9A%8F%E7%AC%94/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>GFS-NOTE</title>
+    <link href="https://www.parak.top/posts/47899/"/>
+    <id>https://www.parak.top/posts/47899/</id>
+    <published>2023-01-28T16:00:00.000Z</published>
+    <updated>2023-03-04T12:06:36.643Z</updated>
+    
+    
+    <summary type="html">由浅入深解读论文 Google File System，分析 GFS 的整体架构、存储设计和高可用设计等，看看共识算法并不火热的时代 GFS 在一致性方面的抉择。</summary>
+    
+    
+    
+    <category term="File-System" scheme="https://www.parak.top/categories/File-System/"/>
+    
+    
+    <category term="Paper" scheme="https://www.parak.top/tags/Paper/"/>
+    
+    <category term="File-System" scheme="https://www.parak.top/tags/File-System/"/>
+    
+    <category term="Distributed-Storage" scheme="https://www.parak.top/tags/Distributed-Storage/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>二三</title>
+    <link href="https://www.parak.top/posts/15895/"/>
+    <id>https://www.parak.top/posts/15895/</id>
+    <published>2023-01-22T16:00:00.000Z</published>
+    <updated>2023-01-23T15:14:48.334Z</updated>
+    
+    
+    <summary type="html">喜欢在舅舅家干饭，上次干饭还是在五月的东莞。</summary>
+    
+    
+    
+    <category term="随笔" scheme="https://www.parak.top/categories/%E9%9A%8F%E7%AC%94/"/>
+    
+    
+    <category term="随笔" scheme="https://www.parak.top/tags/%E9%9A%8F%E7%AC%94/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>手语</title>
+    <link href="https://www.parak.top/posts/17628/"/>
+    <id>https://www.parak.top/posts/17628/</id>
+    <published>2022-11-16T16:00:00.000Z</published>
+    <updated>2023-04-30T05:24:53.050Z</updated>
+    
+    
+    <summary type="html">重新出发吧，终点是未知。但为目标，不为感受。</summary>
+    
+    
+    
+    <category term="随笔" scheme="https://www.parak.top/categories/%E9%9A%8F%E7%AC%94/"/>
+    
+    
+    <category term="随笔" scheme="https://www.parak.top/tags/%E9%9A%8F%E7%AC%94/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>go-三色标记算法</title>
+    <link href="https://www.parak.top/posts/25521/"/>
+    <id>https://www.parak.top/posts/25521/</id>
+    <published>2022-10-10T16:00:00.000Z</published>
+    <updated>2023-03-04T12:35:31.037Z</updated>
+    
+    
+    <summary type="html">三色标记算法是一种基于增量思想的GC算法。GC线程和应用线程交替执行，每次只收集一片区域的垃圾，直到垃圾完成。</summary>
+    
+    
+    
+    <category term="Golang" scheme="https://www.parak.top/categories/Golang/"/>
+    
+    
+    <category term="Golang" scheme="https://www.parak.top/tags/Golang/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Time-5-混合逻辑时钟</title>
+    <link href="https://www.parak.top/posts/5498/"/>
+    <id>https://www.parak.top/posts/5498/</id>
+    <published>2022-09-29T16:00:00.000Z</published>
+    <updated>2022-11-10T15:23:43.582Z</updated>
+    
+    
+    <summary type="html">物理时钟在于直观，但无法精确；逻辑时钟可以确定事件的因果关系，但需要节点通信。2014年诞生的混合逻辑时钟继承了二者的优势血脉。</summary>
+    
+    
+    
+    <category term="Time" scheme="https://www.parak.top/categories/Time/"/>
+    
+    
+    <category term="Time" scheme="https://www.parak.top/tags/Time/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Time-4-TrueTime</title>
+    <link href="https://www.parak.top/posts/4622/"/>
+    <id>https://www.parak.top/posts/4622/</id>
+    <published>2022-09-28T16:00:00.000Z</published>
+    <updated>2022-09-27T08:40:17.939Z</updated>
+    
+    
+    <summary type="html">NTP协议无法避免复杂的广域网导致的误差，Google于2012年提出的TrueTime同时在硬件和算法上提升了物理时钟的可靠性。</summary>
+    
+    
+    
+    <category term="Time" scheme="https://www.parak.top/categories/Time/"/>
+    
+    
+    <category term="Time" scheme="https://www.parak.top/tags/Time/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Time-3-向量时钟</title>
+    <link href="https://www.parak.top/posts/46081/"/>
+    <id>https://www.parak.top/posts/46081/</id>
+    <published>2022-09-27T16:00:00.000Z</published>
+    <updated>2022-09-27T08:40:17.972Z</updated>
+    
+    
+    <summary type="html">Lamport逻辑时钟存在的问题是不能描述事件的因果关系，十年之后由Colin Fidge和Friedemann Mattern提出的向量时钟算法解决了这个问题。</summary>
+    
+    
+    
+    <category term="Time" scheme="https://www.parak.top/categories/Time/"/>
+    
+    
+    <category term="Time" scheme="https://www.parak.top/tags/Time/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Time-2-LamportClock</title>
+    <link href="https://www.parak.top/posts/64129/"/>
+    <id>https://www.parak.top/posts/64129/</id>
+    <published>2022-09-26T16:00:00.000Z</published>
+    <updated>2022-10-09T02:59:55.633Z</updated>
+    
+    
+    <summary type="html">由于NTP协议存在误差，所以不能通过机器上的本地时间来确定顺序，Lamport老爷子在1978年提出的Lamport逻辑时钟是解决这个问题的方法之一。</summary>
+    
+    
+    
+    <category term="Time" scheme="https://www.parak.top/categories/Time/"/>
+    
+    
+    <category term="Time" scheme="https://www.parak.top/tags/Time/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Time-1-NTP协议</title>
+    <link href="https://www.parak.top/posts/42549/"/>
+    <id>https://www.parak.top/posts/42549/</id>
+    <published>2022-09-25T16:00:00.000Z</published>
+    <updated>2022-09-27T08:40:45.629Z</updated>
+    
+    
+    <summary type="html">揭秘计算机时钟背后的原理，了解初代计算机系统物理时钟同步协议——NTP。</summary>
+    
+    
+    
+    <category term="Time" scheme="https://www.parak.top/categories/Time/"/>
+    
+    
+    <category term="Time" scheme="https://www.parak.top/tags/Time/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Kubernetes-API</title>
+    <link href="https://www.parak.top/posts/55155/"/>
+    <id>https://www.parak.top/posts/55155/</id>
+    <published>2022-06-07T16:00:00.000Z</published>
+    <updated>2022-10-26T14:38:02.840Z</updated>
+    
+    
+    <summary type="html">学习Kubernetes的声明式API和Kubernetes编程范式，以Istio项目为例剖析声明式API的重要意义。深入探究API对象的奥秘，并编写Network自定义控制器。</summary>
+    
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/categories/Kubernetes/"/>
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/tags/Kubernetes/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Kubernetes-Job</title>
+    <link href="https://www.parak.top/posts/64083/"/>
+    <id>https://www.parak.top/posts/64083/</id>
+    <published>2022-06-06T16:00:00.000Z</published>
+    <updated>2022-07-06T15:14:36.892Z</updated>
+    
+    
+    <summary type="html">学习Kubernetes离线业务编排对象Job和Job Controller的执行原理，并通过实践学习Job对象三种常见的使用方法。</summary>
+    
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/categories/Kubernetes/"/>
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/tags/Kubernetes/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Kubernetes-DaemonSet</title>
+    <link href="https://www.parak.top/posts/24948/"/>
+    <id>https://www.parak.top/posts/24948/</id>
+    <published>2022-06-05T16:00:00.000Z</published>
+    <updated>2022-07-06T15:14:36.916Z</updated>
+    
+    
+    <summary type="html">学习Kubernetes守护进程编排对象DaemonSet，DaemonSet 只管理Pod对象，通过nodeAffinity和Toleration这两个调度器的小功能，保证了每个节点上有且只有一个Pod。</summary>
+    
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/categories/Kubernetes/"/>
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/tags/Kubernetes/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Kubernetes-StatefulSet</title>
+    <link href="https://www.parak.top/posts/4208/"/>
+    <id>https://www.parak.top/posts/4208/</id>
+    <published>2022-06-04T16:00:00.000Z</published>
+    <updated>2022-10-20T04:28:56.194Z</updated>
+    
+    
+    <summary type="html">学习Kubernetes的有状态应用StatefulSet，状态分为拓扑状态和存储状态。</summary>
+    
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/categories/Kubernetes/"/>
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/tags/Kubernetes/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Kubernetes-ReplicaSet</title>
+    <link href="https://www.parak.top/posts/63660/"/>
+    <id>https://www.parak.top/posts/63660/</id>
+    <published>2022-06-03T16:00:00.000Z</published>
+    <updated>2022-10-13T10:08:09.823Z</updated>
+    
+    
+    <summary type="html">学习Kubernetes的控制器模型的核心控制循环（Controll Loop）和Kubernetes水平扩展的资源对象ReplicaSet。</summary>
+    
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/categories/Kubernetes/"/>
+    
+    
+    <category term="Kubernetes" scheme="https://www.parak.top/tags/Kubernetes/"/>
+    
+  </entry>
+  
+</feed>

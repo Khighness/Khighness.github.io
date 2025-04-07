@@ -1,0 +1,389 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Time-5-混合逻辑时钟 | Khighness</title><meta name="keywords" content="Time"><meta name="author" content="Khighness"><meta name="copyright" content="Khighness"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="物理时钟在于直观，但无法精确；逻辑时钟可以确定事件的因果关系，但需要节点通信。2014年诞生的混合逻辑时钟继承了二者的优势血脉。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Time-5-混合逻辑时钟">
+<meta property="og:url" content="https://www.parak.top/posts/5498/index.html">
+<meta property="og:site_name" content="Khighness">
+<meta property="og:description" content="物理时钟在于直观，但无法精确；逻辑时钟可以确定事件的因果关系，但需要节点通信。2014年诞生的混合逻辑时钟继承了二者的优势血脉。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-83.jpg">
+<meta property="article:published_time" content="2022-09-29T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-11-10T15:23:43.582Z">
+<meta property="article:author" content="Khighness">
+<meta property="article:tag" content="Time">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-83.jpg"><link rel="shortcut icon" href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/K.jpg"><link rel="canonical" href="https://www.parak.top/posts/5498/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//s4.cnzz.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?16576652";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script async="async" data-pjax="data-pjax" src="https://s4.cnzz.com/z_stat.php?id=1279324689&amp;web_id=1279324689"></script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Khighness","link":"链接: ","source":"来源: Khighness","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-11-10 23:23:43'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/background.css"><link rel="stylesheet" href="/css/iconfont/iconfont.css"><link rel="stylesheet" href="/css/mouse.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/css/main.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Khighness" type="application/atom+xml">
+</head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/Khighness.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">93</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">40</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-83.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Khighness</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Time-5-混合逻辑时钟</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-09-29T16:00:00.000Z" title="发表于 2022-09-30 00:00:00">2022-09-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-11-10T15:23:43.582Z" title="更新于 2022-11-10 23:23:43">2022-11-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Time/">Time</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Time-5-混合逻辑时钟"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>计算机处理时钟有两种方式，一种是物理时钟，包括NTP协议和TrueTime都属于物理时钟，另一种是逻辑时钟，包括Lamport逻辑时钟和向量时钟。这两种时钟有各自的优缺点。物理时钟的优点在于直观，就是真实世界的时间，使用方便，缺点在于无法做到绝对精确，成本相对高一些。逻辑时钟的优点在于可以做到精确的因果关系，缺点在于节点之间需要通信，而且使用上不如物理时钟直观。</p>
+<p>本文介绍的混合逻辑时钟（HLC）将物理时钟和逻辑时钟结合起来。</p>
+<h2 id="HLC介绍"><a href="#HLC介绍" class="headerlink" title="HLC介绍"></a>HLC介绍</h2><p>HLC由Sandeep Kulkarni, Murat Demirbas, Deepak Madeppa, Bharadwaj Avva, and Marcelo Leone在2014年的论文<a target="_blank" rel="noopener" href="https://cse.buffalo.edu/~demirbas/publications/hlc.pdf">Logical Physical Clocks</a>中提出。目的是为了填补理论（逻辑时钟）和实际（物理时钟）之间差距，支持因果关系，同时又有物理时钟的直观特点。</p>
+<p>给分布式系统中每一个事件分配一个HLC，比如e事件的HLC记作l.e，HLC保证能够满足一下四个性质：</p>
+<ol>
+<li>如果e事件发生在f事件之前（e happened before f），那么l.e一定小于l.f，也就是满足因果关系。</li>
+<li>l.e可以存储在一个整数中，不会随着分布式系统中节点数的增加而增加。（这点和向量时钟不一样，向量时钟会随着节点数的增加而增加）</li>
+<li>l.e的值不会无限增长。（这点和Lamport逻辑时钟不一样，Lamport逻辑时钟会无限增长）</li>
+<li>l.e的值个和e事件发生的物理时钟接近，| l.e - pt.e |的值会小于一定的范围。</li>
+</ol>
+<h2 id="第一版算法"><a href="#第一版算法" class="headerlink" title="第一版算法"></a>第一版算法</h2><p>Lamport逻辑时钟算法：</p>
+<p>记事件j的逻辑时钟为l.j</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">初始化：l.j = 0</span><br><span class="line">发生消息事件或者本地事件：l.j = l.j + 1</span><br><span class="line">接受m消息事件：l.j = max(l.j, l.m) + 1</span><br></pre></td></tr></table></figure>
+
+<p>如果想在算法中引入物理时钟，最简单的做法是每次修改逻辑时钟的时候，比较逻辑时钟和物理时钟的大小，取最大的值。</p>
+<p>记事件j发生时的物理时钟值为pt.j，算法变成了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">初始化：l.j = 0</span><br><span class="line">发送消息事件或者本地事件：l.j = max(l.j + 1, pt.j)</span><br><span class="line">接受m消息事件：l.j = max(l.j + 1, l.m + 1, pt.j)</span><br></pre></td></tr></table></figure>
+
+<p>从算法中可以很容易地看出满足上面说的HLC性质1和2。然而算法不满足性质3和性质4。举个例子：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/5498/p1.png" class="" title="p1">
+<center>图1</center>
+
+<p>分布式系统中有4个节点，每个矩形中左边的数字是本节点的物理时钟pt，右边是本节点的逻辑时钟l。消息从节点0依次到节点1，节点2，节点3，再到节点1。到了节点1的时候，从图中可以看到物理时钟和逻辑时钟的差距 |l - pt|是13。如果整个生系统中事件发生的频率比较高，可以想象到，物理时钟和逻辑时钟的差距会越来越大。这违反了性质3和性质4。</p>
+<p>为什么会发生这个问题？原因是虽然Lamport逻辑时钟的基础上引入了物理时钟，但是我们却不知道这个值究竟是物理时钟增长导致的还是逻辑时钟增长导致的。这样即使物理时钟的增长追赶上了逻辑时钟的增长，我们也没办法重置逻辑时钟部分的值。</p>
+<p>第一版算法凉凉。</p>
+<h2 id="第二版算法"><a href="#第二版算法" class="headerlink" title="第二版算法"></a>第二版算法</h2><p>为了解决这个问题，很自然地想到把物理时钟和逻辑时钟分开来表示。我们把HLC分成两部分l.j和c.j。l.j表示事件j发生时所感知到的最大物理时钟值，c.j是事件j的逻辑时钟部分，当几个事件在同一个物理时钟值内发生时，c用于记录事件之间的因果关系。pt依然表示本地NTP协议的物理时钟值。</p>
+<div class="note icon simple"><i class="note-icon fab fa-korvue"></i><p>对于事件j，本地物理时钟为pt.j，感知到的最大物理时钟为l.j，逻辑时钟为c.j，新的算法如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">初始化：l.j = 0; c.j = 0</span><br><span class="line">发送消息事件或者本地事件：</span><br><span class="line">	if pt.j &lt;= l.j</span><br><span class="line">  	    c.j = c.j + 1</span><br><span class="line">	else </span><br><span class="line">	    c.j = 0</span><br><span class="line">  	    l.j = pt.j</span><br><span class="line">接收m消息事件：</span><br><span class="line">	// 如果j事件，m消息和本地物理时钟的值相同，增加逻辑时钟部分</span><br><span class="line">	if l.j == l.m == pt.j</span><br><span class="line">  	    c.j = max(c.j, c.m) + 1</span><br><span class="line">	// 如果本地物理时钟没赶上HLC的物理时钟，并且j事件的逻辑时钟更大，更新逻辑时钟的值</span><br><span class="line">	else if pt.j &lt;= l.j and l.m &lt;= l.j</span><br><span class="line">  	    c.j = c.j + 1</span><br><span class="line">	// 如果本地物理时钟没赶上HLC的物理时钟，并且m消息的逻辑时钟更大，更新HLC的逻辑时钟部分和物理时钟部分</span><br><span class="line">	else if pt.j &lt;= l.m and l.j &lt;= l.m</span><br><span class="line">  	    c.j = c.m + 1</span><br><span class="line">  	    l.j = l.m</span><br><span class="line">	else </span><br><span class="line">  	    c.j = 0</span><br><span class="line">  	    l.j = pt.j</span><br></pre></td></tr></table></figure></div>
+
+
+<p>新算法执行的过程中，本地时钟的值通过NTP协议更新，HLC的值不会修改本地时钟值。由于分离了物理时钟和逻辑时钟，新的事件发生时，如果物理时钟部分的值没增长，就只增加逻辑时钟部分的值。如果本地的物理时钟赶上了HLC的物理时钟部分的值l.j，就可以重置逻辑时钟部分的值c.j，并把l.j更新为新的本地物理时钟。这样就可以解决第一版算法中HLC无限增长的问题，也满足了性质3和性质4的要求。</p>
+<p>对于任意一个事件j，pt.j &lt;= l.j，也即HLC的物理时钟部分的值一定大于等于本地NTP的时钟值。假设整个分布式系统中，NTP协议的时钟误差为ε。新算法中，对于任何一个事件j，|l.j - pt.j| &lt;= ε，也就是HLC物理部分的值和本地物理时钟值的差距不会超过ε。根据NTP协议，这个误差值在局域网内大概1ms内，广域网可能达到100ms或更大。</p>
+<p>使用新算法来分析第一版算法中的例子：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/5498/p2.png" class="" title="p2">
+<center>图2</center>
+
+<p>上图中，如果消息只在节点123之间流动，HLC的物理时钟部分l.j会一致保持为10，c.j会一直增长，直到节点123中任何一个的NTP时钟超过10，这时会将c.j重置为0。</p>
+<p>工程实现上，HLC可以设置称64比特的整数，高位48比特时以毫秒为单位的物理事件，低位16比特时一个单调增长的整数，最大65535。整体结构有点像雪花算法生成的唯一ID。</p>
+<h2 id="HLC的异常处理"><a href="#HLC的异常处理" class="headerlink" title="HLC的异常处理"></a>HLC的异常处理</h2><p>如果某个节点的NTP物理时钟出现了异常，比如变成了一个极大的值，其他节点收到这个故障节点的消息，会导致其他节点的HLC值出现了问题。为了防止故障的扩散，可以设置HLC物理部分偏差的上限，如果收到的消息物理部分值的偏差超过上限，忽略这条消息，同时发送告警等待人工处理。</p>
+<h2 id="HLC的性能数据"><a href="#HLC的性能数据" class="headerlink" title="HLC的性能数据"></a>HLC的性能数据</h2><p>HLC论文中给出了HLC的性能数据。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/5498/p3.png" class="" title="p3">
+<center>图3</center>
+
+<p>上图中，4个节点组成的系统，NTP的平均误差值offset分别设为5毫秒和1.5毫秒两种情况。在这两种情况下，HLC的逻辑时钟部分的值c &lt; 4，保持了一个很低的值。在offset为5ms的情况下，|l - pt|的最大差距是21.7ms，90%的差距值小于7.8ms，平均差距是0.2ms。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/5498/p4.png" class="" title="p4">
+<center>图4</center>
+
+<p>如果把节点数变成16个，NTP的平均误差offset分别设为16ms和6ms两种情况。c &lt; 8，依然保持了一个很低的值。从图中可以看出offset越小，c的值整体会更小。</p>
+<h2 id="HLC应用"><a href="#HLC应用" class="headerlink" title="HLC应用"></a>HLC应用</h2><p>HLC可以用于分布式数据库一致性快照读的处理中。很多系统都使用了HLC，比如HBase和CockRoachDB。</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/5498/p5.png" class="" title="p5">
+<center>图5</center>
+
+<p>比如，我们要获取t=10这个时间点的数据快照，也即HLC为(l=10, c=0)，拿这个HLC值去每个节点查找，可以得出上图中黑色的粗线，这条线对应的数据就是系统在t=10时的数据快照。</p>
+<p>CockRoachDB在分布式事务中使用HLC。根据HLC的性质4，|l.e - pt.e|的值会小于一定的范围MaxOffset，CockRoachDB默认这个值为500ms，pt.e + MaxOffset一定是系统中最大的物理事件。启动事务时会获取本地的HLC值hlc.e，并且确定一个区间[hlc.e, hlc.e + MaxOffet]，然后发往其他节点执行快照读，如果节点上某个数据的HLC值为hlc.g，分三种情况考虑：</p>
+<ol>
+<li>如果hlc.e + MaxOffset &lt; hlc.g，即处于区间的右边，那么e事件肯定发生在g事件之前，不能读取这个数据。</li>
+<li>如果hlc.e + hlc.g &lt;= hlc.e + MaxOffset，即处于区间之中，由于物理时钟的不确定性，不能分辨出e事件和g事件的先后关系。这个时候需要重启事务，获取一个更大的hlc，相当于等待这个不确定的事件过去，推迟事务的执行。</li>
+<li>如果hlc.g &lt; hlc.e，那么g事件肯定发生在e之前，这时可以读取这个数据。</li>
+</ol>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p>[1] <a target="_blank" rel="noopener" href="https://cse.buffalo.edu/~demirbas/publications/hlc.pdf">Logical Physical Clocks</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.parak.top">Khighness</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.parak.top/posts/5498">https://www.parak.top/posts/5498</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 </a>许可协议。转载请注明来自<a href="https://www.parak.top">炒菜K殿下</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Time/">Time</a></div><div class="post_share"><div class="social-share" data-image="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-83.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/25521/"><img class="prev-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-84.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">go-三色标记算法</div></div></a></div><div class="next-post pull-right"><a href="/posts/4622/"><img class="next-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-82.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Time-4-TrueTime</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/4622/" title="Time-4-TrueTime"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-82.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-29</div><div class="title">Time-4-TrueTime</div></div></a></div><div><a href="/posts/46081/" title="Time-3-向量时钟"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-81.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-28</div><div class="title">Time-3-向量时钟</div></div></a></div><div><a href="/posts/64129/" title="Time-2-LamportClock"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-80.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-27</div><div class="title">Time-2-LamportClock</div></div></a></div><div><a href="/posts/42549/" title="Time-1-NTP协议"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-79.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-26</div><div class="title">Time-1-NTP协议</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#HLC%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">HLC介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E7%89%88%E7%AE%97%E6%B3%95"><span class="toc-number">2.</span> <span class="toc-text">第一版算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E7%89%88%E7%AE%97%E6%B3%95"><span class="toc-number">3.</span> <span class="toc-text">第二版算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HLC%E7%9A%84%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86"><span class="toc-number">4.</span> <span class="toc-text">HLC的异常处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HLC%E7%9A%84%E6%80%A7%E8%83%BD%E6%95%B0%E6%8D%AE"><span class="toc-number">5.</span> <span class="toc-text">HLC的性能数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HLC%E5%BA%94%E7%94%A8"><span class="toc-number">6.</span> <span class="toc-text">HLC应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-number">7.</span> <span class="toc-text">参考文献</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background: gray"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By Khighness</div><div class="footer_custom_text"><a href="https://www.foreverblog.cn/" target="_blank" > <img src="https://img.foreverblog.cn/logo_en_default.png" alt="" style="width:auto;height:16px;"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'Py2eOHzSdrnxKPzKrOJaHJOq-9Nh9j0Va',
+      appKey: '9eQhwuCgyshpYKn4rtEhqt4R',
+      placeholder: '',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: true,
+      serverURLs: '',
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/Khighness/cdn/js/emotion.json',
+      emojiMaps: "",
+      enableQQ: true,
+      path: window.location.pathname,
+      requiredFields: ["nick, mail"],
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://unpkg.com/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="//code.tidio.co/ao1f4qdjllf8yowzz7v5brdaejt42uoi.js" async="async"></script><script>function onTidioChatApiReady() {
+  window.tidioChatApi.hide();
+  window.tidioChatApi.on("close", function() {
+    window.tidioChatApi.hide();
+  });
+}
+if (window.tidioChatApi) {
+  window.tidioChatApi.on("ready", onTidioChatApiReady);
+} else {
+  document.addEventListener("tidioChat-ready", onTidioChatApiReady);
+}
+
+var chatBtnFn = () => {
+  document.getElementById("chat_btn").addEventListener("click", function(){
+    window.tidioChatApi.show();
+    window.tidioChatApi.open();
+  });
+}
+chatBtnFn()
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>function history_calendar_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-history"><div class="card-content"><div class="item-headline"><i class="fas fa-clock fa-spin"></i><span>那年今日</span></div><div id="history-baidu" style="height: 100px;overflow: hidden"><div class="history_swiper-container" id="history-container" style="width: 100%;height: 100%"><div class="swiper-wrapper" id="history_container_wrapper" style="height:20px"></div></div></div></div>';
+                console.log('已挂载history_calendar')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            history_calendar_injector_config()
+        } </script><script data-pjax  src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script><script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/js/main.js"></script><!-- hexo injector body_end end --></body></html>

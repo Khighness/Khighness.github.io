@@ -1,0 +1,717 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GFS-NOTE | Khighness</title><meta name="keywords" content="Paper,File-System,Distributed-Storage"><meta name="author" content="Khighness"><meta name="copyright" content="Khighness"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="由浅入深解读论文 Google File System，分析 GFS 的整体架构、存储设计和高可用设计等，看看共识算法并不火热的时代 GFS 在一致性方面的抉择。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GFS-NOTE">
+<meta property="og:url" content="https://www.parak.top/posts/47899/index.html">
+<meta property="og:site_name" content="Khighness">
+<meta property="og:description" content="由浅入深解读论文 Google File System，分析 GFS 的整体架构、存储设计和高可用设计等，看看共识算法并不火热的时代 GFS 在一致性方面的抉择。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-87.jpg">
+<meta property="article:published_time" content="2023-01-28T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-03-04T12:06:36.643Z">
+<meta property="article:author" content="Khighness">
+<meta property="article:tag" content="Paper">
+<meta property="article:tag" content="File-System">
+<meta property="article:tag" content="Distributed-Storage">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-87.jpg"><link rel="shortcut icon" href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/K.jpg"><link rel="canonical" href="https://www.parak.top/posts/47899/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//s4.cnzz.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?16576652";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script async="async" data-pjax="data-pjax" src="https://s4.cnzz.com/z_stat.php?id=1279324689&amp;web_id=1279324689"></script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Khighness","link":"链接: ","source":"来源: Khighness","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-03-04 20:06:36'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/background.css"><link rel="stylesheet" href="/css/iconfont/iconfont.css"><link rel="stylesheet" href="/css/mouse.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/css/main.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Khighness" type="application/atom+xml">
+</head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/Khighness.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">93</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">40</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-87.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Khighness</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont icon-index"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont icon-tianchongxing-1"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont icon-tianchongxing-"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont icon-fenlei"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont icon-ziyuan"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont icon-K"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">GFS-NOTE</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-01-28T16:00:00.000Z" title="发表于 2023-01-29 00:00:00">2023-01-29</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-03-04T12:06:36.643Z" title="更新于 2023-03-04 20:06:36">2023-03-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/File-System/">File-System</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">8.1k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>25分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="GFS-NOTE"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="1-文件系统概述"><a href="#1-文件系统概述" class="headerlink" title="1. 文件系统概述"></a>1. 文件系统概述</h1><br />
+<b>什么是文件系统？</b>
+
+<ul>
+<li>目前的大部分分布式系统，都或多或少的依赖于底层的文件系统。</li>
+<li>文件系统是干什么的？很好理解，就是存储文件，并进行读取等操作的系统。</li>
+<li>无论是 KV 数据，还是配置文件，或者数据库中的一个个关系组，落在操作系统底层，都是以文件形式存储的。</li>
+<li>为了统一管理一个大型吸引的所有需要持久化的文件，我们需要一个文件系统来集中提供对文件的存储等操作。</li>
+<li>比如 GFS、HDFS、NAS、TFS、FastDFS、Facebook Haystack 等，都是现在非常常用的文件系统。</li>
+<li>GFS 作为最出名的分布式文件系统，首先具备了大规模、可扩展、适配大文件、自动运维等高级特性，是分布式文件系统正式开始大规模商用的奠基之作。</li>
+</ul>
+<br />
+<b> 文件系统的接口</b>
+
+<p>（1）文件系统应该具有的接口</p>
+<ul>
+<li>创建（Create）</li>
+<li>删除（Delete）</li>
+<li>打开（Open）</li>
+<li>关闭（Close）</li>
+<li>读取（Read）</li>
+<li>写入（Write）</li>
+</ul>
+<p>（2）拓展的接口</p>
+<ul>
+<li>生成快照（Snapshot）</li>
+<li>修改（Update）</li>
+</ul>
+<br />
+<b>分布式文件系统的诉求</b>
+
+<ul>
+<li>我们需要操作系统的文件目录，就可以理解为一个单机文件系统。</li>
+<li>但单机文件系统显然存在存储容量和读写性能的上限，这时我们可以把文件分散存储在多台机器上。</li>
+<li>Google 希望能在传统分布式文件系统的基础上增加一些特殊的功能与特性，可以支持超过1000台机器、几百TB的存储，以适配 Google 快速增长的业务，最终于2003年在 SOSP 上发表了论文：The Google File System。</li>
+<li>Google后续的一系列技术栈，包括 MapReduce、BigTable 等，都是在 GFS 的基础上搭建起来的。</li>
+</ul>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/47899/gfs-timeline.png" class="" title="gfs-timeline"><br />
+
+<br />
+综上，我们就可以得出文件系统的演变过程：
+
+<div class="note icon simple"><i class="note-icon fab fa-korvue"></i><p>单机文件系统  ——(A)——&gt; 分布式文件系统 ——(B)——&gt; GFS</p>
+</div>
+
+<p>由此我们引出分布式文件系统的以下问题：<br>A1. 文件怎样分散在多台服务器上？怎样实现自动扩缩容？<br>A2. 怎样知道一个文件存储在哪台机器上？<br>A3. 怎样保证服务器在故障时文件不损坏不丢失？<br>A4. 使用多副本的话，怎样保证副本之间的一致？<br>B1. 怎样支持大文件（几个GB）存储？<br>B2. 超多机器的情况下，怎样实现<strong>自动监控</strong>、<strong>容错</strong>与<strong>恢复</strong>？<br>B3. 怎样支持快速的<strong>顺序读</strong>和<strong>追加写</strong>？</p>
+<hr>
+<h1 id="2-GFS整体架构"><a href="#2-GFS整体架构" class="headerlink" title="2. GFS整体架构"></a>2. GFS整体架构</h1><p>GFS：GFS client, GFS master, GFS chunkserver.</p>
+<ul>
+<li>GFS client：维持专用接口，与应用交互。</li>
+<li>GFS master：维持元数据，统一管理chunk位置与租约。</li>
+<li>GFS chunkserver：存储数据。</li>
+</ul>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/47899/gfs-architecture.png" class="" title="gfs-architecture.png"><br />
+
+<hr>
+<h1 id="3-GFS存储设计"><a href="#3-GFS存储设计" class="headerlink" title="3. GFS存储设计"></a>3. GFS存储设计</h1><p><b><u>A1. 文件怎样分散存储在多态在多台服务器上？</u></b><br><b><u>B1. 怎样支持大文件（几个 GB）存储？</u></b><br><br /></p>
+<p>GFS 的存储设计关键：</p>
+<ul>
+<li>考虑到文件可能非常大，并且大小不均。GFS 没有选择直接以文件为单位进行存储，而是把文件分为一个个 chunk 来存储。GFS 把每个 chunk 设为 64MB。</li>
+<li>这个思路在分布式领域非常常见。几乎所有涉及存储的系统，都会把文件或数据分割为相同大小的块进行存储。当然，不同类型的应用，块的大小也不相同。</li>
+<li>相对而言，64MB 这个值是偏大的。</li>
+</ul>
+<p>为什么 GFS 会这么设计呢？</p>
+<ol>
+<li>使用 GFS 的系统需要存储的文件都偏大（几 GB），所以较大的 chunk 可以有效减少系统内部的寻址和交互次数；</li>
+<li>大的 chunk 意味着 Client 可能在一个 chunk 上执行多次操作，这可以复用 TCP 连接，节省网络开销；</li>
+<li>更大的 chunk可以减少 chunk 数量，从而节省元数据存储开销，相当于节省了系统内最珍贵的内存资源，这对 GFS 来讲是非常关键的。</li>
+</ol>
+<div class="note icon simple"><i class="note-icon fab fa-korvue"></i><p>当然，更大的 chunk 意味着多个线程同时操作一个 chunk 的可能性增加，容易产生热点问题，对这个问题， GFS 在一致性设计方面做出了性能的妥协。</p>
+</div>
+
+<br />
+<b><u>A1：分割存储。</u></b><br />
+<b><u>B1：采用了更大的 chunk，以及配套的一致性策略。</u></b><br />
+
+<hr>
+<h1 id="4-GFS的master设计"><a href="#4-GFS的master设计" class="headerlink" title="4. GFS的master设计"></a>4. GFS的master设计</h1><p><b><u>A1：怎样实现自动扩缩容？</u></b><br><b><u>A2：怎样知道一个文件存储在哪台机器上？</u></b><br><br /></p>
+<p>（1）文件位置等信息 ——&gt; 元数据<br>（2）管理元数据节点设计为一个单点还是设计成多节点（分布式）呢？</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>单中心节点</th>
+<th>多中心节点（分布式中心节点）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>优点</td>
+<td>实现难度低，一致性容易保证</td>
+<td>不存在瓶颈，可以一劳永逸地解决可扩展性问题</td>
+</tr>
+<tr>
+<td>缺点</td>
+<td>单点可能会成为整个系统的瓶颈</td>
+<td>实现难度极高，一致性难以保证，系统可靠性难以验证</td>
+</tr>
+<tr>
+<td>方案工作重心</td>
+<td>缩减元数据，减少单 master 的压力</td>
+<td>设计一个分布式的元数据管理功能，并验证其可靠性</td>
+</tr>
+</tbody></table>
+<p>Google 最终选择了单 master 节点的方案。<br />做出这个决策的关键点在于：单个中心节点是否能够支持整个 GFS 的元数据服务。<br />Google 判断单点的设计在系统的实现难度与一致性的保证上都有巨大的优势，并且可以通过合理的设计使系统的元数据尽可能精简，来保证单个中心节点也能支持整个系统的服务。<br />Google 最终把工作的重心放在减少单 master 节点的压力上，而不是去设计一个分布式的元数据管理功能，并验证其可行性。</p>
+<p>由此，GFS 设计了单个 master 节点，用来存储整个文件系统的三类元数据：<br /></p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/47899/gfs-storage-architecture.png" class="" title="gfs-storage-architecture.png">
+
+<ol>
+<li>所有文件和 chunk 的 namespace 【持久化】</li>
+<li>文件到 chunk 的映射【持久化】</li>
+<li>每个 chunk 的位置【不持久化】</li>
+</ol>
+<blockquote>
+<p>为什么 chunk 的位置不做持久化呢？<br>对数据进行持久化，就是为了防止 master 宕机的时候丢失元数据。<br>master 在重启的时候，可以从各个 chunkserver 处收集 chunk 的位置信息。<br>所以， master 宕机并不会导致 chunk 的位置信息丢失。<br>但是，namespace 与文件和 chunk 的对应关系是 master 独有的。<br>当然，chunk 的位置也是可以持久化来节省恢复时间的。</p>
+</blockquote>
+<br />
+
+<p><strong>基本逻辑：</strong><br>文件名<br>——&gt; 1. 在 master 中获取文件对应的所有 chunk id<br>——&gt; 2. 根据 chunk id 获取所有 chunk 的位置<br>——&gt; 3. 依次到对应的 chunkserver 中读取 chunk</p>
+<p>如果只读取文件的一部分，那么就要在 master 元数据中计算文件的偏移量，从偏移量对应的 chunk 编号开始读取即可。<br>这个是基本的逻辑，但 GFS 实际的读取过程是经过了很多的优化的，这个后面会谈到。</p>
+<p>GFS采用了一系列措施来确保 master 不会成为整个系统的瓶颈：</p>
+<ol>
+<li>GFS 所有的数据流都不经过 master，而是直接由 Client 和 chunkserver 交互；GFS 把控制流和数据流分离，只有控制流才会经过 master；</li>
+<li>GFS 的 Client 会缓存 master 中的元数据，在大部分情况下，都无需访问 master；</li>
+<li>为了避免 master 的内存成为系统的瓶颈，GFS 采用了一些手段来节省 master 的内存，包括增大 chunk 的大小以节省 chunk 的数量、对元数据进行定制化的压缩等。</li>
+</ol>
+<br />
+<b><u>A1：在 master 单点上增减、调整 chunk 的元数据即可。</u></b><br />
+<b><u>A2：根据 master 中文件到 chunk 再到 chunk 位置的映射来定位具体的 chunkserver。</u></b><br />
+
+<br />
+
+<div class="note icon simple"><i class="note-icon fab fa-korvue"></i><p><strong>时至今日，大部分分布式系统还是会倾向于选择中心节点。</strong><br><strong>因为单点瓶颈并不像想的那么难以解决，非中心节点的实现难度也不如想象中那样可控。</strong></p>
+</div>
+
+
+<hr>
+<h1 id="5-GFS的高可用设计"><a href="#5-GFS的高可用设计" class="headerlink" title="5. GFS的高可用设计"></a>5. GFS的高可用设计</h1><p><b><u>A3：怎样保证服务器在故障时文件不损坏不损失？</u></b><br><b><u>B2：超多机器的情况下，怎样实现自动监控、容错与恢复？</u></b><br /></p>
+<ul>
+<li>高可用问题现在比较通用的做法是共识算法，比如 Paxos 和 Raft。</li>
+<li>但 GFS 诞生的时候，共识算法不像现在那么成熟，所以 GFS 借鉴了主备的思想，为系统的元数据和文件数据都单独设计了高可用方案。</li>
+<li>因为 Google 的文件量很大，所以 GFS 的机器总数可能非常多，从而个别机器宕机的发生会十分频繁。所以面对节点宕机之类的小问题，GFS 应能自动解决，即自动切换主备。</li>
+<li>数据/服务的高可用（逻辑概念）和物理节点的宕机（物理概念）的联系和区别。</li>
+</ul>
+<br />
+我们维持高可用性的目的是什么呢？是为了在有故障发生的情况下仍能不丢失数据，所以我们真正高可用的对象其实是数据、是服务，大部分系统设计中数据和具体节点的定位其实是重合的。
+我们一般能把数据的高可用转化为节点的高可用，但在 GFS 的 chunk 这一纬度，却并不吻合。
+
+<p>下面我们分别讨论 GFS 的元数据和文件数据的高可用。<br><br /></p>
+<h2 id="5-1-master的高可用设计"><a href="#5-1-master的高可用设计" class="headerlink" title="5.1 master的高可用设计"></a>5.1 master的高可用设计</h2><ul>
+<li>master 的三类元数据中，namespace 和文件与 chunk 的对应关系，因为只在 master 中存在，是必须要持久化的，也自然是要保证其高可用的。</li>
+<li>GFS 在正在使用的 master 称为 primary master。在 primary master 之外，GFS 还维持着一个 shadow master 作为备份。</li>
+<li>primary master 会实时向 shadow master 同步 <strong>WAL</strong>，只有 shadow master 同步日志完成，元数据修改操作才算成功。<br />
+
+</li>
+</ul>
+<div class="note icon simple"><i class="note-icon fab fa-korvue"></i><p>WAL一般有两个优势：</p>
+<ul>
+<li>一个是可以以顺序的日志落盘代替乱序的数据落盘，速度更快。在 GFS 中，就是可以让元数据的修改不用等待实时落盘，只要日志写入了，就可以认为元数据落盘成功了。</li>
+<li>另一个优势，就体现在主备复制的时候，我们可以同步 WAL 代替真正的数据块，这样主机同步更便捷可控，备机回放的逻辑也更简单。</li>
+</ul>
+<p>所以，在 GFS 中，primary master 会实时向 shadow master 同步 WAL，只有 shadow master 同步日志完成，元数据修改操作才算成功。
+ </p>
+</div>
+
+<br />
+
+<p>master 的日志写入流程：</p>
+<ol>
+<li>生成新增元数据的日志并写入本地磁盘；</li>
+<li>把 WAL 传输给 shadow master；</li>
+<li>得到反馈再正式修改 primary master 的内存。</li>
+</ol>
+<br />
+
+<p>如何实现自动切换？</p>
+<ul>
+<li>如果 master 宕机，会通过 Google 的 Chubby（本质上是共识算法）来识别并切换到 shadow master，这个切换是秒级的。</li>
+<li>GFS 也和很多存储系统一样，定期对内存做 checkpoint 来减少回放日志代价。</li>
+<li>master 的高可用机制就是就和 MySQL 的主备机制非常像。</li>
+</ul>
+<br />
+
+<h2 id="5-2-chunk的高可用设计"><a href="#5-2-chunk的高可用设计" class="headerlink" title="5.2 chunk的高可用设计"></a>5.2 chunk的高可用设计</h2><ul>
+<li>文件是被拆分为一个个 chunk 来进行存储的，每个 chunk 都有三个副本。所以，文件数据的高可用是以 chunk 为纬度来保持的。</li>
+<li>没法在 chunkserver 之间建立物理上的主备关系，那怎么把一个 chunk 的不同副本之间联系起来呢？GFS 的唯一中心节点—— master 就可以发挥作用，维持 chunk 的副本信息。</li>
+</ul>
+<p>GFS 保证 chunk 高可用的思路：</p>
+<ol>
+<li>在GFS中，对一个 chunk 的每次写入，必须确保在三个副本中的写入都完成，才视为写入完成；</li>
+<li>一个 chunk 的所有副本都会具有完整的数据；</li>
+<li>如果一个 chunkserver 宕机，它上面的所有 chunk 都有另外两个副本依旧可以保存这个 chunk 的数据；</li>
+<li>如果这个宕机的副本在一段时间之后还没有恢复，那么 master 就可以在另一个 chunkserver 重建一个副本，从而始终 chunk 的副本数目维持在3个。</li>
+</ol>
+<br />
+
+<p>GFS 对 chunk 在 chunkserver 上的分布也是可以设置的，比如可以让一个 chunk 的不同副本到不同地域的 chunkserver 中，可以定制一类文件的副本数，比如设为 5。<br>分布式系统的设计是一个整体，为什么 GFS 要保证 chunk 这个逻辑概念的高可用，而不是简单的采用主备呢？<br>是因为 GFS 把较大的文件分割存储为了 chunk，有了 chunk 的概念后，一个机具诱惑的思路就是让 chunk 在 chunkserver之间自由流动，从而使系统具备近乎无限的可扩展性，并且可以完全保证负载均衡。<br>但是，这个选择的代价就是每个 chunkserver 上的 chunk 都不一致，原有的以物理节点为单位的主备模式就不适用了，我们需要以 chunk 为单位设置合理的高可用模式。<br>其实，这里最优的解决方案是共识算法，目前主流的原生分布式数据库，如 TiDB、OceanBase 都是采用的这种方案。但 GFS 的年代共识算法并不成熟，所以 GFS 还是采用了三写一读的模式，副本的信息由中心节点 master 来维持。</p>
+<br />
+
+<p>此外，GFS 维持每个 chunk 的校验和，读取时可以通过校验和进行数据的校验。如果校验和不匹配，chunkserver 会反馈给 master 处理，master 会选择其他副本进行读取，并重建此 chunk 副本。<br><strong>为了减少对 master 的压力，GFS 采用了一种租约（Lease）机制，把文件的读写权限下放给某一个 chunk 副本。master 可以把租约授权给某个 chunk 副本，我们把这个 chunk 副本称为 primary，在租约生效的一段时间内，对这个 chunk 的写操作直接由这个副本负责，租约的有效期一般为60秒。</strong><br>租约的主备只决定控制流走向，不影响数据流。</p>
+<br />
+
+<p>chunk 副本的放置也是一个关键问题，GFS 有三种情况需要 master 发起创建 chunk 副本，分别是新 chunk 创建、chunk 副本复制（re-replication）和负载均衡（rebalancing）：</p>
+<ul>
+<li>副本复制是指因为某些原因，比如一个副本所在的 chunkserver 宕机，导致 chunk 副本数小于预期值（一般为3）后，新增一个 chunk 副本。</li>
+<li>负载均衡则发生在 master 定期对 chunkserver 的监测，如果发现某个 chunkserver 的负载过高，就会执行负载均衡操作，把 chunk 副本搬到另外的 chunkserver 上。当然，这里的“搬迁”操作，实际上就是新建 chunk 和删除原 chunk 的操作。</li>
+</ul>
+<p>这三个操作中，master 对副本位置的选择策略是相同的，要遵循以下三点：</p>
+<ol>
+<li>新副本所在的 chunkserver 的资源利用率较低；</li>
+<li>新副本所在的 chunkserver 最近创建的 chunk 副本不多。这里是为了防止某个 chunkserver 瞬间增加大量副本，成为热点；</li>
+<li>chunk 的其他副本不能在同一机架，这里是为了保证机架或机房级别的高可用。</li>
+</ol>
+<br />
+<b><u>A3：GFS 对元数据和文件数据采用了不同的高可用保证方式。其中元数据和master 节点是绑定的，通过 WAL 和主备来保证其物理上的高可用。而文件数据对应的 chunk 是虚拟概念，GFS并不会在物理上处理 chunkserver 的宕机，而是通过 master 维持 chunk 副本的数量和副本间的一致。</u></b><br />
+<b><u>B2：GFS 采用类似迭代的方法实现自动运维，master 的主备切换由 chubby 负责，chunk 的租约、副本位置与数量由 master 负责，再最终转移到共识算法从而解决。</u></b><br />
+
+<hr>
+<h1 id="6-GFS的读写流程"><a href="#6-GFS的读写流程" class="headerlink" title="6. GFS的读写流程"></a>6. GFS的读写流程</h1><p><b><u>B3：怎么支持快速的顺序读和追加写？</u></b><br /></p>
+<p>这两个问题，跟文件系统的读写流程和一致性机制密切相关。<br>读与写是文件系统最主要的对外接口，也是其性能最核心的体现。</p>
+<p>GFS 作为一个文件系统，对读写的需求是什么样的呢？</p>
+<ul>
+<li>读取：快速，为了极致的性能，可以读到落后的版本，但一定不能是错误的。</li>
+<li>写入，进一步分为两种：改写（overwrite）和追加（append）。</li>
+<li>改写：正确，通常不用在意性能，在意性能的改写可以转为追加。</li>
+<li>追加：快速，为了极致的性能，可以允许一定的异常，但追加的数据一定不能丢失。</li>
+</ul>
+<br />
+
+<h2 id="6-1-GFS的写入"><a href="#6-1-GFS的写入" class="headerlink" title="6.1 GFS的写入"></a>6.1 GFS的写入</h2><p>GFS的写入要在三个副本都完成写入后才能返回写入结果。</p>
+<blockquote>
+<p>为什么要设计成三个副本都写入才算成功呢？要保证高可用的话，为什么不能像共识算法那样写入到大多数副本就返回成功呢？<br>原因就在于相比于写入，GFS还是更在意读的能力，对于一个大型文件系统，多个副本都可以提供读操作是非常必要的，何况 Google 还希望不同地域的副本可以就近提供服务，那么就需要在写入的时候就保证副本的一致性。<br>由此，GFS采用了所有副本都写入完成才算成功的方案。</p>
+</blockquote>
+<br />
+
+<p>确定了三写一读的方案后，GFS的写入采用了两个在现在看来都非常高端的技术：</p>
+<ol>
+<li>流水线技术</li>
+<li>数据流与控制流分离技术<br />
+
+</li>
+</ol>
+<p>其中，流水线技术，Client 会把文件数据发往离自己最近的一个副本，无论它是否是主（是否持有租约）。这个副本在接收到数据后，就立刻向其他副本转发（一边接收，一边转发）。这样就控制了数据的流向，节省了网络传输代价。<br>与流水线技术对应的是普通的主备同步，数据是从Client到主，再从主到备这样单向流动。<br>比如 S1、S2、S3 三个 chunkserver，Client在北京，S1 是主，在上海，S2、S3 是备，在北京。</p>
+<ul>
+<li>主备同步：Client -&gt; S1 -&gt; S2, S1 -&gt; S3，两次跨地域传输</li>
+<li>流水线同步：Client -&gt; S2/S3 -&gt; S1，一次跨地域传输</li>
+</ul>
+<br />
+而数据流和控制流分离，意味着 GFS 对一致性的保证可以不受数据同步的干扰。
+直观理解起来就是，数据量很大的数据流大家有力出力，全部都动员起来；而数据量小的控制流，则由持有租约的 chunkserver 自己决定，来单独负责写入的一致性保证。从而打到性能和一致性的均衡。
+<br />
+
+<p>GFS 的具体写入流程如下所示：</p>
+<img src= "https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/loading.gif" data-lazy-src="/posts/47899/gfs-write-control-and-data-flow.png" class="" title="gfs-write-control-and-data-flow."><br />
+<p>1, 2：Client 向 Master 询问要写入 chunk 的租约在哪个 chunkserver 上（<strong>Primary Replica</strong>），以及其他副本（<strong>Secondary Replicas</strong>）的位置（通常 Client 中直接就有缓存）。<br>3：Client 将数据推送到所有的副本上，这一步就会用到流水线技术，也是写入过程中唯一的数据流操作。<br>4：确认所有副本都收到了数据之后，Client 发送正式写入的请求到 Primary Replica。Primary Replica 接收到这个请求后，会对这个 chunk 上所有的操作排序，然后按照顺序执行写入。<br>5：Primary Replica 把 chunk 写入的顺序同步给 Secondary Replica。如果执行到这一步，Primary Replica 上写入已经成功了，Secondary Replica 按 Primary Replica 执行的顺序把早已获取到的写入真正实施到 chunk 上即可。<br>6：所有的 Secondary Replica 返回 Primary Replica 写入完成。<br>7：Primary Replica 返回写入结果给 Client。</p>
+<p>所有副本都写入成功，Client 确认写入完成。<br>部分 Secondary Replica 写入失败（没有响应），Client 认为写入失败，并从第三步开始重新执行。<br>如果第一个写入操作涉及到多个 chunk，Client 会把它们分为多个写入来执行，每个写入操作都单独执行上面的步骤。<br><br /></p>
+<h2 id="6-2-GFS的改写和追加"><a href="#6-2-GFS的改写和追加" class="headerlink" title="6.2 GFS的改写和追加"></a>6.2 GFS的改写和追加</h2><p>改写可以完全适配上面描述的写入的步骤，重复执行改写也不会产生副本间的不一致。<br>但改写的问题在于一个改写操作可能涉及到多个 chunk。而如果部分 chunk 成功，部分 chunk 失败，我们读到的文件就是不正确的。<br>改写大概率是一个分布式操作，因为它完全可能设计多个存在于不同 chunkserver 的多个 chunk，如果要保证改写的强一致性就非常困难了。<br>论文中没有明说，GFS 对改写的实现很有可能是只保证最终一致性，而不保证强一致性，这也是它不断重试的理由。<br>这里采用两阶段提交的方式也可以保证强一致性，但代价会非常大，问题显而易见：巨大文件的两阶段提交，一旦一个 chunk 写入失败全局都要等待，没有全局时间戳（MVCC）的情况下，要满足一致性等待期间就要阻塞整个文件的写入，改写代价将会非常非常大。<br><br /><br>而追加就没有这样的困扰，因为追加只会涉及到文件的最后一个 chunk 和有可能新增的 chunk。更关键的是，哪怕追加失败，Client 也只会读到过期而不是错误的数据。<br>所以，GFS 论文中一再强调，GFS 推荐使用追加的方式写入文件，并且 Google 内部使用 GFS 的应用，它们的绝大多数写入也都是追加。<br><br /></p>
+<h2 id="6-3-GFS的读取"><a href="#6-3-GFS的读取" class="headerlink" title="6.3 GFS的读取"></a>6.3 GFS的读取</h2><ol>
+<li>Client 收到读取一个文件的请求后，首先会查看自身的缓存中有没有此文件的元数据信息。如果没有，则请求 Master (或 Shadow Master) 获取元数据信息并缓存。</li>
+<li>Client 计算文件偏移量对应的 chunk。</li>
+<li>然后 Client 向离自身最近的 chunkserver发送读请求。如果在这个过程中，发现这个 chunkserver 没有自己所需的 chunk，说明缓存失效，就再请求 Master 获取最新的元数据。</li>
+<li>读取时会进行 chunk 校验和的确认，如果校验和验证不通过，选择其他副本进行读取。</li>
+<li>Client 返回应用读取结果。</li>
+</ol>
+<br />
+<b><u>B3：总体上 GFS 是三写一读的模式。写入采用了流水线技术和数据流和控制流分离的技术保证性能；追加对一致性的保证更简单，也更加高效，所以写入多采用追加的方式。读取则所有副本都可读，在就近读取的情况下性能非常高。</u></b>
+<br />
+
+<hr>
+<h1 id="7-GFS的一致性模型"><a href="#7-GFS的一致性模型" class="headerlink" title="7. GFS的一致性模型"></a>7. GFS的一致性模型</h1><p><b><u>A4: 使用多副本的话，怎么保证副本之间的一致？</u></b><br /></p>
+<p>我们在讨论多副本的时候，已经明确了维持了副本间一致的基本方法，可以保证单个写入的过程中，不会出现副本之间的不一致。<br />但在实际应用中，因为有多个 Client，我们的写入往往是并发执行的，这回带来副本间不一致的风险。</p>
+<p>GFS 把文件数据的一致性大体上分为三个层次：inconsistent，consistent，defined：</p>
+<ul>
+<li>consistent：一致的。表示文件无论从哪个副本读取，读到的结果都一样。</li>
+<li>defined：已定义的。文件发生了修改操作后，读取是一致的，且 Client 可以看到最新修改的内容。（在 consistent 的基础上还能与用户最新的写入保持一致）</li>
+</ul>
+<p>由此，GFS 画出了下面的一致性表格：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Write</th>
+<th>Record Append</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Serial <br />success</td>
+<td><em>defined</em></td>
+<td><em>defined</em><br /><em>interspersed with</em><br /><em>inconsistent</em></td>
+</tr>
+<tr>
+<td>Concurrent <br />success</td>
+<td><em>consistent</em> <br /><em>but undefined</em></td>
+<td><em>defined</em><br /><em>interspersed with</em><br /><em>inconsistent</em></td>
+</tr>
+<tr>
+<td>Failure</td>
+<td><em>inconsistent</em></td>
+<td><em>inconsistent</em></td>
+</tr>
+</tbody></table>
+<br />
+
+<h2 id="7-1-改写的一致性"><a href="#7-1-改写的一致性" class="headerlink" title="7.1 改写的一致性"></a>7.1 改写的一致性</h2><p>对于 Write，也就是改写：</p>
+<ul>
+<li>Serial success（串行改写成功）：defined。因为所有副本都完成改写后才能返回成功，并且重复执行改写也不会产生副本间不一致，所以串行改写成功数据是 defined。</li>
+<li>Failure（写入失败）：inconsistent。这通常发生在重试了一定次数扔无法在所有副本都写入成功时，意味着大概率有个副本宕机了，这种情况下一定是不一致的，Client 也不会返回成功。</li>
+<li>Concurrent Success（并发改写成功）：consistent but undefined。对于单个改写操作而言，成功就意味着副本间是一致的。但并发改写操作可能会设计多个 chunk，不同 chunk 对改写的执行顺序不一定相同，而这有可能造成应用读取不到预期的效果。</li>
+</ul>
+<br />
+
+<h2 id="7-2-追加的一致性"><a href="#7-2-追加的一致性" class="headerlink" title="7.2 追加的一致性"></a>7.2 追加的一致性</h2><p>对于 Record Append，也就是追加写，追加操作是不区分串行还是并行的， 它们的一致性都为 defined interspersed with inconsistent，可以翻译为“已定义但有可能存在副本间不一致”。<br />追加在面对副本出错而重复执行写入的情况时，会有部分副本出现重复追加，这也就是“interspersed with inconsistent”的原因。那么，追加在所有副本一次性成功的情况下，就是“defined”的了。</p>
+<p>为了实现追加“defined”的特性，避免追加面对改写那样跨 chunk 的情况，GFS 对追加做了一些额外的限制：</p>
+<ol>
+<li>单次 append 的大小不超过 64MB。这样就避免了单次追加的内容太大导致跨 chunk。</li>
+<li>如果文件最后一个 chunk 的大小不足以提供此次追加所需空间，则把此空间用 padding (GFS 可识别的填充物) 填满，然后新增 chunk 进行append。这样进一步避免了最后一个 chunk 空间不足导致跨 chunk 的情况。</li>
+</ol>
+<p>每次 append 的都会限制在一个 chunk 上，从而可以保证追加操作的原子性，在并发执行时也可以保证 Client 读取符合最新追加的结果。</p>
+<p>并且，重复追加的问题相对来讲很好解决，比如文件原有的值是’ABC’，追加’DEF’。有的副本第一次失败重复执行就是’ABCDEF’，而两次都正确的副本是’ABCDEFDEF’。但我们有很多手段可以再读取时仅读到一个’DEF’，比如记录文件长度、各副本定期校验等。<br />如果 GFS 是一个通用的开放文件系统，那么完全可以把追加读取的重复校验在 Client 中实现。但 GFS 毕竟是仅用于 Google 内部，Google 就没有选择把这步放在 Client 中，而是让使用 GFS 的应用分别实现，以达到最高的性能。</p>
+<div class="note icon simple"><i class="note-icon fab fa-korvue"></i><p>这里其实涉及到了一点内部一致性和外部一致性的关系，作为一个分布式系统，我们只要保证外部一致性即可，内部文件在各副本存储时可以存在差异，但只要读取出来是一样的，我们就可以认为它们是一致的。</p>
+</div>
+
+<br />
+
+<p><b><u>A4：</u></b></p>
+<ol>
+<li><b><u>对一个 chunk 的所有副本的写入顺序都是一致的。这是由控制流和数据流分离技术实现的，控制流都是由 primary 发出，而副本的写入顺序也是由 primary 到 secondary。 </u></b></li>
+<li><b><u>使用 chunk 版本号来检测 chunk 副本是否出现过宕机。失效的副本不会再进行写入操作，master 不会再记录这个副本的信息（等 Client 刷缓存时同步），GC程序会自动回收这些副本。</u></b></li>
+<li><b><u>master 会定期检查 chunk 副本的 checksum 来确认其是否正确。</u></b></li>
+<li><b><u>GFS 推荐应用更多地使用追加来打达到更高的一致性。</u></b></li>
+</ol>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>GFS的一致性模型</th>
+<th>共识算法的一致性模型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>primary/leader选择</td>
+<td>master 决定，简单但依赖外部组件</td>
+<td>内部选举，负责但不依赖外界</td>
+</tr>
+<tr>
+<td>写入成功条件</td>
+<td>所有节点写入成功</td>
+<td>超过N/2的节点写入成功</td>
+</tr>
+</tbody></table>
+<hr>
+<h1 id="8-GFS总结"><a href="#8-GFS总结" class="headerlink" title="8. GFS总结"></a>8. GFS总结</h1><p>回到 GFS 作为一个分布式文件系统的本质，从最简单、最根本的角度回顾一下它：</p>
+<ul>
+<li>对于外部应用而言，只需要把要读写的文件的相关信息传入 GFS 的 Client，Client 就会自动进行读写服务。除此之外，文件在GFS中是怎样保存的、会不会丢失（高可用性），文件总量快速增长怎么办、GFS容量会不会不够用（可扩展性）等问题，使用 GFS 的应用都不用关心，因为 GFS 内部的存储设计和高可用设计，都可以基本保证对外部应用的读取没有功能上的影响（透明）。</li>
+<li>但有一点需要注意：对 GFS 内部的数据，只有通过 GFS 的接口，也就是 Client 来读写，才能确保得到想要的结果。因为 GFS不仅会把文件拆分成 64MB 的 chunk 分开存储，它们的位置全是自动分布的；并且 GFS 在读写的过程中还会对文件数据进行一些存储上的改动，这些改动（比如追加时的 padding）在通过 Client 读取时是不可见的，但是又确确实实存在于 GFS 的服务器上。</li>
+<li>此外，使用 GFS还要注意尽量采用追加的方式写入。也就是说，GFS 希望你不要纠结于把文件修改掉，而是在文件最后写上改动后的内容，被修改的内容不去读取就好。</li>
+</ul>
+<br />
+
+<p>GFS 也有快照（Snapshot）机制，用于备份或者回滚，快照使用非常通过 COW（Copy On Write，写时复制）技术，GFS 生成快照的流程如下：</p>
+<ol>
+<li>Master 回收对应 chunk 的租约，停止对应 chunk 的所有写入【停止文件file的写入】</li>
+<li>拷贝一份文件的元数据并命名为快照文件（快照文件的元数据仍指向原文件的 chunk）【拷贝文件 file 的元数据，生成 file_backup 元数据】</li>
+<li>增加文件所有 chunk 的引用技术【本来 file 的所有 chunk 引用技术都为1，只有 file 引用，现在变为2，file 和 file_backup 都引用】</li>
+<li>Master 正常授权租约，允许对 chunk 进行写入【开启文件 file 的写入】</li>
+<li>下次对文件进行修改时，发现其 chunk 的引用计数大于1，修改时会先拷贝一个新 chunk，再在新 chunk 上写入【file 的三个 chunk A、B、C，chunk C有写入，name写入时拷贝 chunk C为 C’，并写入C’。此时 file 指向 A、B、C’，file_backup 指向 A、B、C】</li>
+</ol>
+<p>GFS 的 COW 快照机制，可以尽量减少生成快照对在线业务的影响。<br><br /></p>
+<p>同时，GFS 也有垃圾回收（GC）机制，GFS 需要 GC 的场景：</p>
+<ol>
+<li>客户端直接删除文件</li>
+<li>因丢失修改操作而失效的副本</li>
+<li>因 checksum 校验失败而失效的副本</li>
+</ol>
+<p>GC机制：</p>
+<ol>
+<li>不立刻清除 chunk 的物理存储，而是修改文件的元数据，把文件名改为一个包含删除时间戳的、隐藏的名字。Master 会定期对 namespace 元数据进行扫描，当发现文件删除超过3天（可配置），就会把这个元数据删除掉。对应的 chunk 会走 2、3 一样的流程删除。</li>
+<li>2、3定期扫描各 chunkserver 汇报的 chunk 集合，当发现没有对应文件元数据的 chunk （不被任何文件包含的 chunk）时，chunkserver 就可以把这些 chunk 真正删除掉了。</li>
+</ol>
+<br />
+
+<blockquote>
+<p>我们根据我们当下和未来的应用规模和技术生态来重新评估传统文件系统的种种特性，我们的评估结果使我们选择了一个完全不同于传统的设计思路。根据我们的设计思路，我们认为组件失效是常态而不是异常，更关注于大文件的写入再读取的业务逻辑，并配套的拓展标准文件系统接口以及放松部分接口的限制。GFS 可以通过持续监控，复制关键数据和快速自动恢复来提供容错能力。GFS 的设计保证了在有大量的并发读操作的时候能够提供很高的合计吞吐量，GFS 成功的满足了我们对存储的需求。</p>
+</blockquote>
+<hr>
+<h1 id="9-参考资料"><a href="#9-参考资料" class="headerlink" title="9. 参考资料"></a>9. 参考资料</h1><p>[1]. <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1MF41157bF">解读Google分布式文件系统GFS</a><br>[2]. <a target="_blank" rel="noopener" href="https://spongecaptain.cool/post/paper/googlefilesystem/">Google File System-GFS 论文阅读</a></p>
+<hr>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.parak.top">Khighness</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.parak.top/posts/47899">https://www.parak.top/posts/47899</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 </a>许可协议。转载请注明来自<a href="https://www.parak.top">炒菜K殿下</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Paper/">Paper</a><a class="post-meta__tags" href="/tags/File-System/">File-System</a><a class="post-meta__tags" href="/tags/Distributed-Storage/">Distributed-Storage</a></div><div class="post_share"><div class="social-share" data-image="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-87.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/wepay.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/avatar/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/57950/"><img class="prev-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-88.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">偶然</div></div></a></div><div class="next-post pull-right"><a href="/posts/15895/"><img class="next-cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-86.jpg" onerror="onerror=null;src='https://khighness-blog.oss-cn-shanghai.aliyuncs.com/common/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">二三</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/13171/" title="RAFT-NOTE"><img class="cover" data-lazy-src="https://khighness-blog.oss-cn-shanghai.aliyuncs.com/top/bg-64.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-10-10</div><div class="title">RAFT-NOTE</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E6%A6%82%E8%BF%B0"><span class="toc-text">1. 文件系统概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-GFS%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="toc-text">2. GFS整体架构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-GFS%E5%AD%98%E5%82%A8%E8%AE%BE%E8%AE%A1"><span class="toc-text">3. GFS存储设计</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-GFS%E7%9A%84master%E8%AE%BE%E8%AE%A1"><span class="toc-text">4. GFS的master设计</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-GFS%E7%9A%84%E9%AB%98%E5%8F%AF%E7%94%A8%E8%AE%BE%E8%AE%A1"><span class="toc-text">5. GFS的高可用设计</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#5-1-master%E7%9A%84%E9%AB%98%E5%8F%AF%E7%94%A8%E8%AE%BE%E8%AE%A1"><span class="toc-text">5.1 master的高可用设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-2-chunk%E7%9A%84%E9%AB%98%E5%8F%AF%E7%94%A8%E8%AE%BE%E8%AE%A1"><span class="toc-text">5.2 chunk的高可用设计</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#6-GFS%E7%9A%84%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B"><span class="toc-text">6. GFS的读写流程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#6-1-GFS%E7%9A%84%E5%86%99%E5%85%A5"><span class="toc-text">6.1 GFS的写入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-2-GFS%E7%9A%84%E6%94%B9%E5%86%99%E5%92%8C%E8%BF%BD%E5%8A%A0"><span class="toc-text">6.2 GFS的改写和追加</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-3-GFS%E7%9A%84%E8%AF%BB%E5%8F%96"><span class="toc-text">6.3 GFS的读取</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#7-GFS%E7%9A%84%E4%B8%80%E8%87%B4%E6%80%A7%E6%A8%A1%E5%9E%8B"><span class="toc-text">7. GFS的一致性模型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#7-1-%E6%94%B9%E5%86%99%E7%9A%84%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-text">7.1 改写的一致性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-2-%E8%BF%BD%E5%8A%A0%E7%9A%84%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-text">7.2 追加的一致性</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#8-GFS%E6%80%BB%E7%BB%93"><span class="toc-text">8. GFS总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#9-%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">9. 参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background: gray"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By Khighness</div><div class="footer_custom_text"><a href="https://www.foreverblog.cn/" target="_blank" > <img src="https://img.foreverblog.cn/logo_en_default.png" alt="" style="width:auto;height:16px;"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'Py2eOHzSdrnxKPzKrOJaHJOq-9Nh9j0Va',
+      appKey: '9eQhwuCgyshpYKn4rtEhqt4R',
+      placeholder: '',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: true,
+      serverURLs: '',
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/Khighness/cdn/js/emotion.json',
+      emojiMaps: "",
+      enableQQ: true,
+      path: window.location.pathname,
+      requiredFields: ["nick, mail"],
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://unpkg.com/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="//code.tidio.co/ao1f4qdjllf8yowzz7v5brdaejt42uoi.js" async="async"></script><script>function onTidioChatApiReady() {
+  window.tidioChatApi.hide();
+  window.tidioChatApi.on("close", function() {
+    window.tidioChatApi.hide();
+  });
+}
+if (window.tidioChatApi) {
+  window.tidioChatApi.on("ready", onTidioChatApiReady);
+} else {
+  document.addEventListener("tidioChat-ready", onTidioChatApiReady);
+}
+
+var chatBtnFn = () => {
+  document.getElementById("chat_btn").addEventListener("click", function(){
+    window.tidioChatApi.show();
+    window.tidioChatApi.open();
+  });
+}
+chatBtnFn()
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>function history_calendar_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-history"><div class="card-content"><div class="item-headline"><i class="fas fa-clock fa-spin"></i><span>那年今日</span></div><div id="history-baidu" style="height: 100px;overflow: hidden"><div class="history_swiper-container" id="history-container" style="width: 100%;height: 100%"><div class="swiper-wrapper" id="history_container_wrapper" style="height:20px"></div></div></div></div>';
+                console.log('已挂载history_calendar')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            history_calendar_injector_config()
+        } </script><script data-pjax  src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script><script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-card-history/baiduhistory/js/main.js"></script><!-- hexo injector body_end end --></body></html>
